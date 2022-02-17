@@ -9,7 +9,7 @@
 #include <unistd.h>
 
 
-#define NFC_SERVER_PORT 3005
+#define NFC_SERVER_PORT 3015
 #define MAX_CONNECTIONS 10
 
 int initiate_server(void){
@@ -22,6 +22,11 @@ int initiate_server(void){
         syslog(LOG_ERR, "Error creating␣socket");
         exit(EXIT_FAILURE);
     }
+
+
+    int reuse = 1;
+    if (setsockopt(sockval, SOL_SOCKET, SO_REUSEADDR, (const char*)&reuse, sizeof(reuse)) < 0)
+        syslog(LOG_ERR, "setsockopt(SO_REUSEADDR) failed");
 
     Direccion.sin_family=AF_INET; // TCP/IP family 
     Direccion.sin_port=htons(NFC_SERVER_PORT); // Asigning port
@@ -45,7 +50,7 @@ int initiate_server(void){
     }
 
 void launch_service(int connval){
-    char *mensaje = "Hola";
+    char *mensaje = "HTTP/1.1 200 OK\r\n\r\nHola Buenas Tardes\n";
     int pid;
     long type, aux;
 
