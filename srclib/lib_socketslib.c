@@ -1,16 +1,6 @@
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <syslog.h>
-#include <strings.h>
-#include <string.h>
-#include <unistd.h>
+#include "../includes/lib_socketlib.h"
 
-
-#define NFC_SERVER_PORT 3015
-#define MAX_CONNECTIONS 10
 
 int initiate_server(void){
 
@@ -56,7 +46,7 @@ void launch_service(int connval){
 
     /*pid = fork();
     if (pid < 0) exit(EXIT_FAILURE);
-    if (pid == 0) return;*/
+    if (pid != 0) return;*/
     syslog (LOG_INFO, "New access");
     send(connval,mensaje, strlen(mensaje),0);
     syslog (LOG_INFO, "Message sent");
@@ -87,19 +77,3 @@ void accept_connection(int sockval){
     return;
 }
 
-
-
-int main(int argc, char **argv){
-
-    int listenfd, connfd;
-    socklen_t clilen, addrlen;
-    struct sockaddr *cliaddr;
-
-    // Contiene las llamadas a socket(), bind() y listen()
-    listenfd = initiate_server();
-
-    while (1){
-        accept_connection(listenfd);
-    }
-    return 0;
-}
