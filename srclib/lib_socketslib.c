@@ -72,8 +72,6 @@ void accept_connection(int sockval){
         exit(EXIT_FAILURE);
     }
 
-    launch_service(desc);
-
     return;
 }
 
