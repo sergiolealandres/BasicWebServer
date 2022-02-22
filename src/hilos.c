@@ -8,7 +8,7 @@ void * thread_main(void *arg){
     struct sockaddr *cliaddr;
     cliaddr = malloc(addrlen);
     printf("thread %d starting\n", (int) arg);
-    //for ( ; ; ) 
+    for ( ; ; ){
         clilen = addrlen;
         printf("hoola222\n");
         pthread_mutex_lock(&mlock);
@@ -20,6 +20,7 @@ void * thread_main(void *arg){
     //
     launch_service(connfd);
     close(connfd);
+    }
 /* process request */
 }
 void thread_make(int i){
