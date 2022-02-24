@@ -40,7 +40,8 @@ int parsear_conexion(int socketfd, Request *request){
         if (buflen == sizeof(buf))
             return -1;
     }
-    printf("HOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOLA\n");
+    return 0;
+    /*printf("HOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOLA\n");
     printf("request is %d bytes long\n", pret);
     printf("method is %.*s\n", (int)method_len, method);
     printf("path is %.*s\n", (int)path_len, path);
@@ -50,7 +51,7 @@ int parsear_conexion(int socketfd, Request *request){
         printf("%.*s: %.*s\n", (int)headers[i].name_len, headers[i].name,
             (int)headers[i].value_len, headers[i].value);
     }
-
+    */
 
 }
 int procesar_conexion(int socketfd){
