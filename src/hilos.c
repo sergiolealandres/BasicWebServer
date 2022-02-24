@@ -1,4 +1,4 @@
-#include "../includes/hilos.h"
+#include "../includes/procesar.h"
 #include <pthread.h>
 
 void * thread_main(void *arg){
@@ -17,8 +17,9 @@ void * thread_main(void *arg){
         pthread_mutex_unlock(&mlock);
         tptr[(int) arg].thread_count++;
         printf("hoola2\n");
-    //
-    launch_service(connfd);
+    
+    //launch_service(connfd);
+    procesar_conexion(connfd);
     close(connfd);
     }
 /* process request */

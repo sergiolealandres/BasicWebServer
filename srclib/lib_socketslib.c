@@ -44,9 +44,6 @@ void launch_service(int connval){
     int pid;
     long type, aux;
 
-    /*pid = fork();
-    if (pid < 0) exit(EXIT_FAILURE);
-    if (pid != 0) return;*/
     syslog (LOG_INFO, "New access");
     send(connval,mensaje, strlen(mensaje),0);
     syslog (LOG_INFO, "Message sent");

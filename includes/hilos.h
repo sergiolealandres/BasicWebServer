@@ -10,6 +10,7 @@
 #include <pthread.h>
 #include <signal.h>
 
+#define MAX_SIZE 2048
 
 typedef struct {
 
@@ -33,4 +34,4 @@ int initiate_server(void);
 
 void launch_service(int connval);
 
-int accept_connection(int sockval);
+//int accept_connection(int sockval);
