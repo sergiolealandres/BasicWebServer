@@ -60,7 +60,7 @@ void launch_service(int connval){
     return;
 }
 
-void accept_connection(int sockval){
+int accept_connection(int sockval){
 
     int desc, len;
     struct sockaddr Conexion;
@@ -72,6 +72,6 @@ void accept_connection(int sockval){
         exit(EXIT_FAILURE);
     }
 
-    return;
+    return desc;
 }
 

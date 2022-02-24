@@ -1,6 +1,5 @@
 #include "../includes/lib_socketlib.h"
 
-
 #include "../includes/hilos.h"
 
 pthread_mutex_t mlock = PTHREAD_MUTEX_INITIALIZER;

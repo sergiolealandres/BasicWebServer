@@ -14,7 +14,7 @@
 #define MAX_CONNECTIONS 10
 
 int initiate_server(void);
-void accept_connection(int sockval);
+int accept_connection(int sockval);
 void launch_service(int connval);
 
 
