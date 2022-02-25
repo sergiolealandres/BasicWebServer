@@ -22,13 +22,15 @@ lib_socketslib.a: $(SRCLIB)/lib_socketslib.o
 picohttpparser.a: $(SRCLIB)/picohttpparser.o
 	ar rcs $(LIB)/picohttpparser.a $(OBJ)/picohttpparser.o 
 
-hilos.o: $(SRC)/hilos.c
-	$(CC) -c $(SRC)/hilos.c -o $(OBJ)/hilos.o
+#hilos.o: $(SRC)/hilos.c
+#	$(CC) -c $(SRC)/hilos.c -o $(OBJ)/hilos.o
+procesar.o: $(SRC)/procesar.c
+	$(CC) -c $(SRC)/procesar.c -o $(OBJ)/procesar.o
 
 servidor.o: $(SRC)/servidor.c
 	$(CC) -c $(SRC)/servidor.c -o $(OBJ)/servidor.o
 
-servidor: $(OBJ)/servidor.o $(LIB)/lib_socketslib.a $(OBJ)/hilos.o
+servidor: $(OBJ)/servidor.o $(LIB)/lib_socketslib.a $(OBJ)/procesar.o #$(OBJ)/hilos.o
 	$(CC) $^ -o $@
 
 parsertest.o: $(SRC)/parsertest.c 

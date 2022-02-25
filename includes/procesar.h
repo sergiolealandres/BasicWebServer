@@ -2,6 +2,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <sys/socket.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 #include <netinet/in.h>
 #include <syslog.h>
 #include <strings.h>
@@ -9,8 +11,14 @@
 #include <unistd.h>
 #include <pthread.h>
 #include <signal.h>
+#include <time.h>
 #include "picohttpparser.h"
 #include "hilos.h"
+
+#define MAX_HEADER 4096
+#define NOMBRE_SERVIDOR "Elpeonkamikaze"
+#define VERSION_SERVIDOR "1.0"
+
 
 typedef struct {
 
@@ -29,3 +37,4 @@ typedef struct {
 int parsear_conexion(int socketfd, Request* request);
 Request* request_create();
 int procesar_conexion(int socketfd);
+char * construir_cabecera(char *codigo,char *path_recurso);
