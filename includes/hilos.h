@@ -1,3 +1,6 @@
+#ifndef HILOS
+#define HILOS
+
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -18,6 +21,7 @@ pthread_t thread_tid;
 
 long thread_count;
 } Thread;
+
 Thread *tptr;
 
 
@@ -32,6 +36,6 @@ void thread_make(int i);
 void * thread_main(void *arg);
 int initiate_server(void);
 
-void launch_service(int connval);
 
 //int accept_connection(int sockval);
+#endif

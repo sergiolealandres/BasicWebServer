@@ -1,5 +1,4 @@
-#include <errno.h>
-#include <assert.h>
+
 #include "../includes/procesar.h"
 
 Request* request_create(){
@@ -169,7 +168,7 @@ void mandar_respuesta(int socketfd,char *codigo,char *path){
 
     if(path)memcpy(mensaje + strlen(cabecera),buff,file_length);
 
-    send(socketfd,mensaje,strelen(cabecera)+file_length,0);
+    send(socketfd,mensaje,strlen(cabecera)+file_length,0);
     syslog (LOG_INFO, "Message sent");
     free(cabecera);
 }
@@ -189,7 +188,7 @@ void get(int socketfd, Request *r){
         return;
     }
 
-    flose(f);
+    fclose(f);
     mandar_respuesta(socketfd,"200 OK",r->path);
 
     return;

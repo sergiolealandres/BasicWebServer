@@ -1,3 +1,6 @@
+#ifndef PROCESAR
+#define PROCESAR
+
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -12,8 +15,9 @@
 #include <pthread.h>
 #include <signal.h>
 #include <time.h>
-#include "picohttpparser.h"
-#include "hilos.h"
+#include <errno.h>
+#include <assert.h>
+#include "../includes/picohttpparser.h"
 
 #define MAX_HEADER 4096
 #define NOMBRE_SERVIDOR "Elpeonkamikaze"
@@ -38,3 +42,5 @@ int parsear_conexion(int socketfd, Request* request);
 Request* request_create();
 int procesar_conexion(int socketfd);
 char * construir_cabecera(char *codigo,char *path_recurso);
+
+#endif
