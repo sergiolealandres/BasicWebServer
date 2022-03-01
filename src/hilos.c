@@ -5,6 +5,7 @@
 void * thread_main(void *arg){
     int connfd;
     Request *request=request_create();
+    Request *copia;
     socklen_t clilen;
     struct sockaddr *cliaddr;
     cliaddr = malloc(addrlen);
@@ -16,12 +17,11 @@ void * thread_main(void *arg){
         connfd = accept_connection(listenfd);
         printf("in mutex\n");
         pthread_mutex_unlock(&mlock);
-        tptr[*((int*) arg)].thread_count++;
-        parsear_conexion(connfd,request);
+        //tptr[*((int*) arg)].thread_count++;
+        procesar_conexion(connfd);
         printf("hoola2\n");
     
     //launch_service(connfd);
-    procesar_conexion(connfd);
     close(connfd);
     }
 /* process request */

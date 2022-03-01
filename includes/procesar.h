@@ -7,8 +7,10 @@
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/types.h>
+#include <sys/sendfile.h>
 #include <netinet/in.h>
 #include <syslog.h>
+#include <fcntl.h>
 #include <strings.h>
 #include <string.h>
 #include <unistd.h>
@@ -23,6 +25,8 @@
 #define NOMBRE_SERVIDOR "Elpeonkamikaze"
 #define VERSION_SERVIDOR "1.0"
 #define MAX_ANSWER 100000
+#define MAX_PATH 2048
+#define MAX_SENT 2048
 
 typedef struct {
 
@@ -37,10 +41,11 @@ typedef struct {
 
 } Request;
 
-
-int parsear_conexion(int socketfd, Request* request);
+Request* request_copy(Request *r);
+int parsear_conexion(int socketfd, Request** request);
 Request* request_create();
+
 int procesar_conexion(int socketfd);
 char * construir_cabecera(char *codigo,char *path_recurso);
-
+void get(int socketfd, Request *r);
 #endif

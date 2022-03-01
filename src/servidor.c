@@ -11,7 +11,6 @@ void sig_int(int signal){
 int main(int argc, char **argv){
 
     int i;
-    construir_cabecera("200 OK","index.html");
     listenfd=initiate_server();
     nthreads = 1;
     tptr = calloc(nthreads, sizeof(Thread));

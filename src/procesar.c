@@ -7,7 +7,28 @@ Request* request_create(){
     return request;
 }
 
+Request* request_copy(Request *r){
+    int i;
+    Request *cpy = request_create();
 
+    if(!cpy || !r) return NULL;
+
+    cpy->method = (char*)malloc(r->method_len);
+    strncpy(cpy->method,r->method,r->method_len);
+    cpy->method_len=r->method_len;
+
+    cpy->path = (char*)malloc(r->path_len);
+    strncpy(cpy->path,r->path,r->path_len);
+    cpy->path_len=r->path_len;
+
+    cpy->minor_version = r->minor_version;
+
+    for(i=0;i<r->num_headers;i++){
+        cpy->headers[i]=r->headers[i];
+    }
+    cpy->num_headers = r->num_headers;
+    return cpy;
+}
 
 int tipo_fichero(char* path,char *tipo){
     char final[6];
@@ -16,9 +37,10 @@ int tipo_fichero(char* path,char *tipo){
     int pos_punto;
 
     if(!path) return -1;
-    
+    printf("el path en tipofichero es %s\n",path);
     len = strlen(path);
     if(len < 5) return -1;
+    printf("La última letra es %c\n",path[len-1]);
 
     for(pos_punto=0;pos_punto<5&&path[len-pos_punto-1]!='.';pos_punto++);
     
@@ -28,12 +50,12 @@ int tipo_fichero(char* path,char *tipo){
 
     
 
-    for(i=0;i<pos_punto;i++){
+    for(i=0;i<=pos_punto;i++){
         final[i] = path[len - pos_punto + i -1];
     }
 
     final[i] = '\0';
-    //printf("final es %s\n",final);
+    printf("final es %s\n",final);
     if(!strcmp(final,".txt")) sprintf(tipo,"text/plain");
     else if (!strcmp(final,".html")) sprintf(tipo,"text/html");
     else if (!strcmp(final,".htm")) sprintf(tipo,"text/html");
@@ -49,15 +71,17 @@ int tipo_fichero(char* path,char *tipo){
     return 0;
 }
 
-int parsear_conexion(int socketfd, Request *request){
+int procesar_conexion(int socketfd){
 
-
-    char buf[4096], *method, *path;
-    int pret, minor_version, i;
-    struct phr_header headers[100];
-    size_t buflen = 0, prevbuflen = 0, method_len, path_len, num_headers;
+    char prueba[2048];
+    char buf[4096];
+    int pret, i;
+    size_t buflen = 0, prevbuflen = 0;
     ssize_t rret;
-    printf("dentro del parseoooooooooooooooooooooooo\n");
+    Request *request;
+
+    if(!(request=request_create()))return -1;
+
     while (1) {
         /* read the request */
         while ((rret = read(socketfd, buf + buflen, sizeof(buf) - buflen)) == -1 && errno == EINTR)
@@ -67,9 +91,11 @@ int parsear_conexion(int socketfd, Request *request){
         prevbuflen = buflen;
         buflen += rret;
         /* parse the request */
-        num_headers = sizeof(headers) / sizeof(headers[0]);
-        pret = phr_parse_request(buf, buflen, &(request->method), &(request->method_len), &(request->path), &(request->path_len),
+        request->num_headers = sizeof(request->headers) / sizeof(request->headers[0]);
+        printf("Antes del phr\n");
+        pret = phr_parse_request(buf, buflen, (const char**) &(request->method), &(request->method_len),(const char**) &(request->path), &(request->path_len),
                                 &(request->minor_version), request->headers, &(request->num_headers), prevbuflen);
+        printf("pret es %d\n",pret);
         if (pret > 0)
             break; /* successfully parsed the request */
         else if (pret == -1)
@@ -78,32 +104,30 @@ int parsear_conexion(int socketfd, Request *request){
         if (buflen == sizeof(buf))
             return -1;
     }
-    return 0;
-    /*printf("HOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOLA\n");
+
+    strncpy(prueba,request->path,request->path_len);
+    printf("HOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOLA\n");
     printf("request is %d bytes long\n", pret);
-    printf("method is %.*s\n", (int)method_len, method);
-    printf("path is %.*s\n", (int)path_len, path);
-    printf("HTTP version is 1.%d\n", minor_version);
+    printf("method is %.*s\n", (int)request->method_len, request->method);
+    printf("path is %.*s\n", (int)request->path_len, request->path);
+    printf("HTTP version is 1.%d\n", request->minor_version);
     printf("headers:\n");
-    for (i = 0; i != num_headers; ++i) {
-        printf("%.*s: %.*s\n", (int)headers[i].name_len, headers[i].name,
-            (int)headers[i].value_len, headers[i].value);
+    for (i = 0; i != request->num_headers; ++i) {
+        printf("%.*s: %.*s\n", (int)request->headers[i].name_len, request->headers[i].name,
+            (int)request->headers[i].value_len, request->headers[i].value);
     }
-    */
 
+    printf("Caracteres: ");
+    for(i=0;i<(int)request->path_len;i++){
+        printf("%c ",request->path[i]);
+    }
+    printf("\n");
+
+    get(socketfd, request);
+
+    return 0;
 }
-int procesar_conexion(int socketfd){
 
-    Request *request;
-    
-    request=request_create();
-
-    if(request==NULL)return -1;
-
-    if(parsear_conexion(socketfd, request)) return -1;
-
-
-}
 char * construir_cabecera(char *codigo,char *path_recurso){
     struct stat attr;
     char *cabecera;
@@ -137,7 +161,7 @@ char * construir_cabecera(char *codigo,char *path_recurso){
         if(tipo_fichero(path_recurso,tipo_fic)) return NULL;
         printf("Después de tipo_fichero\n");
 
-        sprintf(cabecera,"%sLast-Modified: %s\r\nContent-Length: %d\r\nContent-Type: %s",cabecera,lastmodified,size_recurso,tipo_fic);
+        sprintf(cabecera,"%sLast-Modified: %s\r\nContent-Length: %d\r\nContent-Type: %s\r\n\r\n",cabecera,lastmodified,size_recurso,tipo_fic);
     }
     printf("La cabecera resultante es: \n\n%s\n\n",cabecera);
     return cabecera;
@@ -145,51 +169,80 @@ char * construir_cabecera(char *codigo,char *path_recurso){
 
 void mandar_respuesta(int socketfd,char *codigo,char *path){
     char *cabecera;
-    char *mensaje;
-    char *buff;
-    FILE *f;
-    int file_length=0;
+    int f;
+    long file_length=0;
+    long acc_sent = 0;
+    ssize_t aux;
 
     if(!codigo) return;
 
-    if(path){
-        if(!(f=fopen(path,"r"))) return;
-        fseek(f, 0L, SEEK_END);
-        file_length = ftell(f);
-
-        if(!(buff=(char*)malloc(file_length+1)))return;
-        fread(buff,file_length,1,f);
-        fclose(f); 
-    }
-
     if(!(cabecera=construir_cabecera(codigo,path)))return;
-    if(!(mensaje=(char*)malloc(strlen(cabecera)+file_length)))return;
-    strncpy(mensaje, cabecera,strlen(cabecera));
 
-    if(path)memcpy(mensaje + strlen(cabecera),buff,file_length);
+    send(socketfd,cabecera,strlen(cabecera),0);
 
-    send(socketfd,mensaje,strlen(cabecera)+file_length,0);
+    if(path){
+        if(!(f=open(path,O_RDONLY))) return;
+        file_length = lseek(f, 0L, SEEK_END);
+        lseek(f,0,0);
+
+        acc_sent=0;
+        while(acc_sent<file_length){
+            aux =sendfile(socketfd,f,NULL,file_length);
+            printf("aux es %ld\n",aux);
+            acc_sent += aux;
+            printf("acc_sent es %ld y file_length es %ld\n",acc_sent,file_length);
+        }
+
+        close(f);
+    }
+    
     syslog (LOG_INFO, "Message sent");
     free(cabecera);
 }
 
 void get(int socketfd, Request *r){
     FILE *f;
-
-    if (!r){
+    char real_path[MAX_PATH];
+    int i;
+    printf("En get\n");
+    if (!r|| !(r->path)){
         mandar_respuesta(socketfd,"400 Bad Request",NULL);
         return;
     }
+    
 
-    if(strlen(r->path)==0) sprintf(r->path,"index.html");
+    if(r->path_len==1){
+        sprintf(real_path,"./index.html");
+    }
+    
 
-    if(!(f=fopen(r->path,"r"))){
+    else{
+        /*printf("Antes de prueba\n");
+        r->path[r->path_len]='\0';
+        printf("Después de prueba\n");*/
+        //printf("Caracteres: |");
+        /*for(i=0;i<(int)r->path_len-1;i++){
+            //printf("%c ",r->path[i]);
+            real_path[i]=r->path[i];
+        }*/
+        //printf("|\n");
+        /*i=0;
+        real_path[0]=r->path[0];
+        real_path[1]='\0';*/
+
+        //printf("r->path is %.*s\n", (int)r->path_len, r->path);
+        sprintf(real_path,".%.*s",(int)r->path_len,r->path);
+    }
+    printf("EL path de r es %.*s\n",(int)r->path_len, r->path);
+    printf("EL path es %s\n",real_path);
+
+    if(!(f=fopen(real_path,"r"))){
         mandar_respuesta(socketfd,"404 Not Found",NULL);
         return;
     }
 
     fclose(f);
-    mandar_respuesta(socketfd,"200 OK",r->path);
+    mandar_respuesta(socketfd,"200 OK",real_path);
 
     return;
 }
