@@ -18,7 +18,7 @@
 #define MAX_HEADER 4096
 #define NOMBRE_SERVIDOR "Elpeonkamikaze"
 #define VERSION_SERVIDOR "1.0"
-
+#define MAX_ANSWER 100000
 
 typedef struct {
 

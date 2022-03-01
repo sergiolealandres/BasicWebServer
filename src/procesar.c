@@ -69,15 +69,15 @@ int parsear_conexion(int socketfd, Request *request){
         buflen += rret;
         /* parse the request */
         num_headers = sizeof(headers) / sizeof(headers[0]);
-        //pret = phr_parse_request(buf, buflen, &(request->method), &(request->method_len), &(request->path), &(request->path_len),
-        //                        &(request->minor_version), request->headers, &(request->num_headers), prevbuflen);
-        //if (pret > 0)
-        //    break; /* successfully parsed the request */
-        //else if (pret == -1)
-        //    return -1;
+        pret = phr_parse_request(buf, buflen, &(request->method), &(request->method_len), &(request->path), &(request->path_len),
+                                &(request->minor_version), request->headers, &(request->num_headers), prevbuflen);
+        if (pret > 0)
+            break; /* successfully parsed the request */
+        else if (pret == -1)
+            return -1;
         /* request is incomplete, continue the loop */
-       // if (buflen == sizeof(buf))
-        //    return -1;
+        if (buflen == sizeof(buf))
+            return -1;
     }
     return 0;
     /*printf("HOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOLA\n");
@@ -132,7 +132,7 @@ char * construir_cabecera(char *codigo,char *path_recurso){
         if(!(f=fopen(path_recurso,"r"))) return NULL;
         fseek(f, 0L, SEEK_END);
         size_recurso = ftell(f);
-
+        fclose(f);
         //get the file type
         printf("Antes de tipo_fichero\n");
         if(tipo_fichero(path_recurso,tipo_fic)) return NULL;
@@ -144,11 +144,54 @@ char * construir_cabecera(char *codigo,char *path_recurso){
     return cabecera;
 }
 
+void mandar_respuesta(int socketfd,char *codigo,char *path){
+    char *cabecera;
+    char *mensaje;
+    char *buff;
+    FILE *f;
+    int file_length=0;
 
-int get(Request *r){
-    
+    if(!codigo) return;
 
+    if(path){
+        if(!(f=fopen(path,"r"))) return;
+        fseek(f, 0L, SEEK_END);
+        file_length = ftell(f);
 
-    return 0;
+        if(!(buff=(char*)malloc(file_length+1)))return;
+        fread(buff,file_length,1,f);
+        fclose(f); 
+    }
+
+    if(!(cabecera=construir_cabecera(codigo,path)))return;
+    if(!(mensaje=(char*)malloc(strlen(cabecera)+file_length)))return;
+    strncpy(mensaje, cabecera,strlen(cabecera));
+
+    if(path)memcpy(mensaje + strlen(cabecera),buff,file_length);
+
+    send(socketfd,mensaje,strelen(cabecera)+file_length,0);
+    syslog (LOG_INFO, "Message sent");
+    free(cabecera);
+}
+
+void get(int socketfd, Request *r){
+    FILE *f;
+
+    if (!r){
+        mandar_respuesta(socketfd,"400 Bad Request",NULL);
+        return;
+    }
+
+    if(strlen(r->path)==0) sprintf(r->path,"index.html");
+
+    if(!(f=fopen(r->path,"r"))){
+        mandar_respuesta(socketfd,"404 Not Found",NULL);
+        return;
+    }
+
+    flose(f);
+    mandar_respuesta(socketfd,"200 OK",r->path);
+
+    return;
 }
 

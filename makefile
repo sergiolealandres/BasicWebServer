@@ -10,30 +10,31 @@ EXE = parsertest servidor clean
 
 all: $(EXE)
 
-lib_socketslib.o: $(SRCLIB)/lib_socketslib.c
+$(OBJ)/lib_socketslib.o: $(SRCLIB)/lib_socketslib.c
 	$(CC) -c $(SRCLIB)/lib_socketslib.c -o $(OBJ)/lib_socketslib.o
 
-picohttpparser.o: $(SRCLIB)/picohttpparser.c
+$(OBJ)/picohttpparser.o: $(SRCLIB)/picohttpparser.c
 	$(CC) -c $(SRCLIB)/picohttpparser.c -o $(OBJ)/picohttpparser.o
 
-lib_socketslib.a: $(SRCLIB)/lib_socketslib.o
+$(LIB)/lib_socketslib.a: $(SRCLIB)/lib_socketslib.o
 	ar rcs $(LIB)/lib_socketslib.a $(OBJ)/lib_socketslib.o 
 
-picohttpparser.a: $(SRCLIB)/picohttpparser.o
+$(LIB)/picohttpparser.a: $(SRCLIB)/picohttpparser.o
 	ar rcs $(LIB)/picohttpparser.a $(OBJ)/picohttpparser.o 
 
-#hilos.o: $(SRC)/hilos.c
-#	$(CC) -c $(SRC)/hilos.c -o $(OBJ)/hilos.o
-procesar.o: $(SRC)/procesar.c
+$(OBJ)/hilos.o: $(SRC)/hilos.c
+	$(CC) -c $(SRC)/hilos.c -o $(OBJ)/hilos.o
+
+$(OBJ)/procesar.o: $(SRC)/procesar.c
 	$(CC) -c $(SRC)/procesar.c -o $(OBJ)/procesar.o
 
-servidor.o: $(SRC)/servidor.c
+$(OBJ)/servidor.o: $(SRC)/servidor.c
 	$(CC) -c $(SRC)/servidor.c -o $(OBJ)/servidor.o
 
 servidor: $(OBJ)/servidor.o $(LIB)/lib_socketslib.a $(OBJ)/procesar.o #$(OBJ)/hilos.o
 	$(CC) $^ -o $@
 
-parsertest.o: $(SRC)/parsertest.c 
+$(OBJ)/parsertest.o: $(SRC)/parsertest.c 
 	$(CC) -c $(SRC)/parsertest.c -o $(OBJ)/parsertest.o
 
 parsertest: $(OBJ)/parsertest.o $(OBJ)/picohttpparser.o $(LIB)/lib_socketslib.a
