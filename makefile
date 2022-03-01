@@ -5,7 +5,7 @@ OBJ=./obj
 INC=./includes
 
 CC=gcc
-FLAGS=-g -Wall -lpthread
+FLAGS=-g -Wall
 EXE = parsertest servidor clean
 
 all: $(EXE)
@@ -31,8 +31,8 @@ $(OBJ)/procesar.o: $(SRC)/procesar.c
 $(OBJ)/servidor.o: $(SRC)/servidor.c
 	$(CC) -c $(SRC)/servidor.c -o $(OBJ)/servidor.o
 
-servidor: $(OBJ)/servidor.o $(LIB)/lib_socketslib.a $(OBJ)/procesar.o $(OBJ)/hilos.o
-	$(CC) $(FLAGS) $^ -o $@
+servidor: $(OBJ)/servidor.o $(LIB)/lib_socketslib.a $(OBJ)/procesar.o $(OBJ)/hilos.o $(OBJ)/picohttpparser.o
+	$(CC) $(FLAGS) $^ -o $@ -lpthread
 
 $(OBJ)/parsertest.o: $(SRC)/parsertest.c 
 	$(CC) -c $(SRC)/parsertest.c -o $(OBJ)/parsertest.o
