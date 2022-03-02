@@ -7,6 +7,12 @@ Request* request_create(){
     return request;
 }
 
+void request_free(Request *request){
+
+    free(request);
+
+}
+
 Request* request_copy(Request *r){
     int i;
     Request *cpy = request_create();
@@ -76,7 +82,7 @@ int procesar_conexion(int socketfd){
     char prueba[2048];
     char buf[4096];
     int pret, i;
-    size_t buflen = 0, prevbuflen = 0;
+    size_t prevbuflen = 0;
     ssize_t rret;
     Request *request;
 
@@ -84,16 +90,16 @@ int procesar_conexion(int socketfd){
 
     while (1) {
         /* read the request */
-        while ((rret = read(socketfd, buf + buflen, sizeof(buf) - buflen)) == -1 && errno == EINTR)
+        while ((rret = read(socketfd, request->buf + request->buflen, sizeof(request->buf) - request->buflen)) == -1 && errno == EINTR)
             ;
         if (rret <= 0)
             return -1;
-        prevbuflen = buflen;
-        buflen += rret;
+        prevbuflen = request->buflen;
+        request->buflen += rret;
         /* parse the request */
         request->num_headers = sizeof(request->headers) / sizeof(request->headers[0]);
         printf("Antes del phr\n");
-        pret = phr_parse_request(buf, buflen, (const char**) &(request->method), &(request->method_len),(const char**) &(request->path), &(request->path_len),
+        pret = phr_parse_request(request->buf, request->buflen, (const char**) &(request->method), &(request->method_len),(const char**) &(request->path), &(request->path_len),
                                 &(request->minor_version), request->headers, &(request->num_headers), prevbuflen);
         printf("pret es %d\n",pret);
         if (pret > 0)
@@ -101,10 +107,10 @@ int procesar_conexion(int socketfd){
         else if (pret == -1)
             return -1;
         /* request is incomplete, continue the loop */
-        if (buflen == sizeof(buf))
+        if (request->buflen == sizeof(request->buf))
             return -1;
     }
-
+/*
     strncpy(prueba,request->path,request->path_len);
     printf("HOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOLA\n");
     printf("request is %d bytes long\n", pret);
@@ -122,8 +128,12 @@ int procesar_conexion(int socketfd){
         printf("%c ",request->path[i]);
     }
     printf("\n");
+*/
 
-    get(socketfd, request);
+    if (strncmp(request->method, "GET", request->method_len) == 0)get(socketfd, request);
+
+
+    else if(strncmp(request->method, "POST", request->method_len) == 0)post(socketfd, request);
 
     return 0;
 }
@@ -175,7 +185,7 @@ void mandar_respuesta(int socketfd,char *codigo,char *path){
     ssize_t aux;
 
     if(!codigo) return;
-
+    
     if(!(cabecera=construir_cabecera(codigo,path)))return;
 
     send(socketfd,cabecera,strlen(cabecera),0);
@@ -245,5 +255,36 @@ void get(int socketfd, Request *r){
     mandar_respuesta(socketfd,"200 OK",real_path);
 
     return;
+}
+
+
+void post(int socketfd, Request *r){
+
+    char* type_data=NULL, aux[100000], real_path[2000], comando[MAX_PATH], buffer[100000]="\0";
+    FILE *pf=NULL;
+    int file_bytes=0;
+    
+    sprintf(real_path,".%.*s",(int)r->path_len,r->path);
+    strncpy(aux, real_path, strlen(real_path));
+    //printf("AUX ESSSSSSSS %s\n", aux);
+
+    //printf("\n\n\nANDA MIRA, UN POST!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n\n\n");
+    type_data = strtok(aux, ".");
+    //printf("\n\n%s\n\n", type_data);
+    type_data = strtok(NULL, "?");
+
+    //printf("\n\n%s       %ld\n\n", type_data, strlen(type_data));
+
+    if(strncmp(type_data, "py", strlen(real_path))==0){
+
+        sprintf(comando, "echo | python3 %s", real_path);
+        mandar_respuesta(socketfd,"200 OK", comando);
+    }
+
+    else if(strncmp(type_data, "php", strlen(real_path))==0){
+        printf("soy el loco pero en php\n");
+    }
+    
+
 }
 

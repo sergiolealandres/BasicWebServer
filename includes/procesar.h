@@ -37,6 +37,8 @@ typedef struct {
     struct phr_header headers[100];
     size_t num_headers;
     int minor_version;
+    char buf[MAX_HEADER];
+    size_t buflen;
 
 
 } Request;
@@ -44,8 +46,9 @@ typedef struct {
 Request* request_copy(Request *r);
 int parsear_conexion(int socketfd, Request** request);
 Request* request_create();
-
+void request_free(Request *request);
 int procesar_conexion(int socketfd);
 char * construir_cabecera(char *codigo,char *path_recurso);
 void get(int socketfd, Request *r);
+void post(int socketfd, Request *r);
 #endif

@@ -1,6 +1,13 @@
 #include "../includes/procesar.h"
 #include "../includes/hilos.h"
 #include "../includes/lib_socketlib.h"
+static volatile int got_signal=0;
+
+
+void sig_thread_handler(int sig){
+    got_signal=1;
+}
+
 
 void * thread_main(void *arg){
     int connfd;
@@ -9,20 +16,37 @@ void * thread_main(void *arg){
     socklen_t clilen;
     struct sockaddr *cliaddr;
     cliaddr = malloc(addrlen);
-    //printf("thread %d starting\n", (int) arg);
+    signal(SIGUSR2, sig_thread_handler);
+    printf("thread %d starting\n", (int) arg);
     for ( ; ; ){
         clilen = addrlen;
         printf("hoola222\n");
         pthread_mutex_lock(&mlock);
+
+         if(got_signal==1){
+            
+            request_free(request);
+            pthread_exit(NULL);
+
+        }
+
         connfd = accept_connection(listenfd);
+
+         if(got_signal==1){
+            
+            request_free(request);
+            pthread_exit(NULL);
+
+        }
+
         printf("in mutex\n");
         pthread_mutex_unlock(&mlock);
         //tptr[*((int*) arg)].thread_count++;
         procesar_conexion(connfd);
         printf("hoola2\n");
     
-    //launch_service(connfd);
-    close(connfd);
+        //launch_service(connfd);
+        close(connfd);
     }
 /* process request */
 }
