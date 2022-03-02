@@ -260,10 +260,12 @@ void get(int socketfd, Request *r){
 
 void post(int socketfd, Request *r){
 
-    char* type_data=NULL, aux[100000], real_path[2000], comando[MAX_PATH], buffer[100000]="\0";
+    char* type_data=NULL, aux[100000], real_path[2000], comando[100000], buffer[100]="\0", aux2[10000]="\0", *aux1=NULL, realbuff[100]="\0";
+    char *file_name="hola.txt";
+    size_t eo=0;
     FILE *pf=NULL;
-    int file_bytes=0;
-    
+    int file_bytes=0, i, flag=0, size_recurso=-1, acc_sent, file_length;
+    strcat(file_name, );
     sprintf(real_path,".%.*s",(int)r->path_len,r->path);
     strncpy(aux, real_path, strlen(real_path));
     //printf("AUX ESSSSSSSS %s\n", aux);
@@ -277,8 +279,77 @@ void post(int socketfd, Request *r){
 
     if(strncmp(type_data, "py", strlen(real_path))==0){
 
-        sprintf(comando, "echo | python3 %s", real_path);
-        mandar_respuesta(socketfd,"200 OK", comando);
+        for(i=0;i<r->num_headers&&flag==0;i++){
+
+            printf("ITERACION %d\n", i);
+            if(strncmp(r->headers[i].name, "Content-Length:", 15)==0){
+                printf("flag=1\n");
+                flag=1;
+            }
+
+        }
+        if(flag==1) size_recurso=atoi(r->headers[i-1].value);
+
+        if(flag==1){
+            
+            strcpy(buffer, r->buf + r->buflen - size_recurso);
+            aux1=strtok(buffer, "+");
+            while(aux1!=NULL){            
+                
+                
+
+                strcat(realbuff, aux1);
+                strcat(realbuff, " ");
+                aux1=strtok(NULL, "+");
+                
+            }
+
+            strtok(realbuff, "=");
+            aux1=strtok(NULL, "=");
+
+            sprintf(comando, "python3 %s %s >%s", real_path, aux1, file_name);
+            /*
+            pf = popen(comando, "r");
+            if(!pf){
+            syslog(LOG_ERR,"Error creando tuberia\n");
+            return ;
+            }
+
+            printf("EL COMANDO ES: %s\n\n\n", comando);
+
+            char line[1000] = "\0";
+
+           
+            while (fgets(line, 1000, pf) != NULL)
+            {
+                strcat(buffer, line);
+            }
+
+            
+            file_bytes =  strlen(buffer);
+            sprintf(line, "%d", file_bytes);
+            
+            */
+           system(comando);
+
+           if(!(pf=open(file_name,O_RDONLY))) return;
+            file_length = lseek(pf, 0L, SEEK_END);
+            lseek(pf,0,0);
+
+            acc_sent=0;
+            while(acc_sent<file_length){
+                eo =sendfile(socketfd,pf,NULL,file_length);
+                printf("aux es %ld\n",aux);
+                acc_sent += eo;
+                printf("acc_sent es %ld y file_length es %ld\n",acc_sent,file_length);
+            }
+
+            close(pf);
+
+        }
+
+        sprintf(comando, "echo | python3 %s ", real_path);
+        //mandar_respuesta(socketfd,"200 OK", comando);
     }
 
     else if(strncmp(type_data, "php", strlen(real_path))==0){

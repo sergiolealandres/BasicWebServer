@@ -17,8 +17,8 @@ void * thread_main(void *arg){
     struct sockaddr *cliaddr;
     cliaddr = malloc(addrlen);
     signal(SIGUSR2, sig_thread_handler);
-    printf("thread %d starting\n", (int) arg);
-    for ( ; ; ){
+    //printf("thread %d starting\n", (int) arg);
+    while (got_signal==0){
         clilen = addrlen;
         printf("hoola222\n");
         pthread_mutex_lock(&mlock);
@@ -47,6 +47,10 @@ void * thread_main(void *arg){
     
         //launch_service(connfd);
         close(connfd);
+    }
+    if(got_signal==1){
+        request_free(request);
+        pthread_exit(NULL);
     }
 /* process request */
 }
