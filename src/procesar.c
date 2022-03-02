@@ -212,37 +212,117 @@ void mandar_respuesta(int socketfd,char *codigo,char *path){
 
 void get(int socketfd, Request *r){
     FILE *f;
-    char real_path[MAX_PATH];
-    int i;
+    char real_path[MAX_PATH], real_path2[MAX_PATH], aux[MAX_PATH], *type_data=NULL, *aux1, *aux2, *aux3, *aux4, comando[2*MAX_SENT];
+    int i, script=0;
+    char realbuff[MAX_PATH];
+    FILE *file;
+    char line[1000], buffer2[1000];
+
+
+
     printf("En get\n");
     if (!r|| !(r->path)){
         mandar_respuesta(socketfd,"400 Bad Request",NULL);
         return;
     }
-    
 
+    printf("pathlen es: %ld\n", r->path_len);
+    
     if(r->path_len==1){
+        
         sprintf(real_path,"./index.html");
     }
-    
 
     else{
-        /*printf("Antes de prueba\n");
+
+    sprintf(real_path,".%.*s",(int)r->path_len,r->path);
+    printf("eo, %s\n", real_path);
+    strncpy(aux, real_path, strlen(real_path));
+    
+    printf("eo, %s\n", aux);
+    type_data = strtok(aux, ".");
+    type_data = strtok(NULL, "?");
+    printf("eo, %s\n", type_data);
+    if(strncmp(type_data, "py", strlen(real_path))==0   || strncmp(type_data, "php", strlen(real_path))==0){
+
+        aux1=strtok(real_path, ".");
+        aux2=strtok(NULL, ".");
+
+        //printf("AUX1 Y AUX2: %s     %s\n", aux1, aux2);
+
+        if(strncmp(aux2, "py", strlen(type_data))==0   || strncmp(aux2, "php", strlen(type_data))==0){
+            
+            strtok(aux2, "?");
+            aux3=strtok(NULL, "?");
+
+            aux1=strtok(aux3, "+");
+            while(aux1!=NULL){            
+
+                strcat(realbuff, aux1);
+                strcat(realbuff, " ");
+                aux1=strtok(NULL, "+");
+                
+            }
+
+            strtok(realbuff, "=");
+            aux1=strtok(NULL, "=");
+
+            printf("AUX1!!!!!!  %s  %s\n", aux1, real_path);
+
+            if(strncmp(type_data, "py", strlen(real_path))==0)
+
+                sprintf(comando, "python3 %s.py %s ", real_path, aux1);
+
+            else
+
+                sprintf(comando, "php %s.php %s ", real_path, aux1);
+
+            printf("el comando formado es %s\n", comando);
+            file=popen(comando, "r");
+            if(!file)return;
+            
+            while (fgets(line, 1000, file) != NULL)
+            {
+                strcat(buffer2, line);
+            }
+            
+            send(socketfd, buffer2, strlen(buffer2), 0);
+
+            pclose(file);
+
+
+        }
+
+
+    }
+    
+    printf("eo\n");
+    }
+    
+    /*
+    else{
+        /*
+        printf("Antes de prueba\n");
         r->path[r->path_len]='\0';
-        printf("Después de prueba\n");*/
+        printf("Después de prueba\n");
         //printf("Caracteres: |");
-        /*for(i=0;i<(int)r->path_len-1;i++){
+        for(i=0;i<(int)r->path_len-1;i++){
             //printf("%c ",r->path[i]);
             real_path[i]=r->path[i];
-        }*/
+        }
         //printf("|\n");
-        /*i=0;
+        i=0;
         real_path[0]=r->path[0];
-        real_path[1]='\0';*/
+        real_path[1]='\0';
 
         //printf("r->path is %.*s\n", (int)r->path_len, r->path);
+
+        
         sprintf(real_path,".%.*s",(int)r->path_len,r->path);
     }
+    */
+    
+    
     printf("EL path de r es %.*s\n",(int)r->path_len, r->path);
     printf("EL path es %s\n",real_path);
 
@@ -260,43 +340,38 @@ void get(int socketfd, Request *r){
 
 void post(int socketfd, Request *r){
 
-    char* type_data=NULL, aux[100000], real_path[2000], comando[100000], buffer[100]="\0", aux2[10000]="\0", *aux1=NULL, realbuff[100]="\0";
-    char *file_name="hola.txt";
-    size_t eo=0;
-    FILE *pf=NULL;
-    int file_bytes=0, i, flag=0, size_recurso=-1, acc_sent, file_length;
-    strcat(file_name, );
+    char* type_data=NULL, aux[10000], real_path[2000], comando[100000], buffer[100]="\0", *aux1=NULL, realbuff[100]="\0";
+    int i, flag=0, size_recurso=-1;
+    FILE *file;
+    char line[1000] = "\0";
+    char buffer2[1000];
+
+   
     sprintf(real_path,".%.*s",(int)r->path_len,r->path);
     strncpy(aux, real_path, strlen(real_path));
-    //printf("AUX ESSSSSSSS %s\n", aux);
-
-    //printf("\n\n\nANDA MIRA, UN POST!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!\n\n\n");
+    
+    
     type_data = strtok(aux, ".");
-    //printf("\n\n%s\n\n", type_data);
     type_data = strtok(NULL, "?");
 
-    //printf("\n\n%s       %ld\n\n", type_data, strlen(type_data));
-
-    if(strncmp(type_data, "py", strlen(real_path))==0){
+    if(strncmp(type_data, "py", strlen(real_path))==0   || strncmp(type_data, "php", strlen(real_path))==0){
 
         for(i=0;i<r->num_headers&&flag==0;i++){
 
-            printf("ITERACION %d\n", i);
             if(strncmp(r->headers[i].name, "Content-Length:", 15)==0){
                 printf("flag=1\n");
                 flag=1;
             }
-
         }
-        if(flag==1) size_recurso=atoi(r->headers[i-1].value);
+        
 
         if(flag==1){
+
+            size_recurso=atoi(r->headers[i-1].value);
             
             strcpy(buffer, r->buf + r->buflen - size_recurso);
             aux1=strtok(buffer, "+");
             while(aux1!=NULL){            
-                
-                
 
                 strcat(realbuff, aux1);
                 strcat(realbuff, " ");
@@ -307,53 +382,38 @@ void post(int socketfd, Request *r){
             strtok(realbuff, "=");
             aux1=strtok(NULL, "=");
 
-            sprintf(comando, "python3 %s %s >%s", real_path, aux1, file_name);
-            /*
-            pf = popen(comando, "r");
-            if(!pf){
-            syslog(LOG_ERR,"Error creando tuberia\n");
-            return ;
-            }
-
-            printf("EL COMANDO ES: %s\n\n\n", comando);
-
-            char line[1000] = "\0";
-
-           
-            while (fgets(line, 1000, pf) != NULL)
-            {
-                strcat(buffer, line);
-            }
-
-            
-            file_bytes =  strlen(buffer);
-            sprintf(line, "%d", file_bytes);
-            
-            */
-           system(comando);
-
-           if(!(pf=open(file_name,O_RDONLY))) return;
-            file_length = lseek(pf, 0L, SEEK_END);
-            lseek(pf,0,0);
-
-            acc_sent=0;
-            while(acc_sent<file_length){
-                eo =sendfile(socketfd,pf,NULL,file_length);
-                printf("aux es %ld\n",aux);
-                acc_sent += eo;
-                printf("acc_sent es %ld y file_length es %ld\n",acc_sent,file_length);
-            }
-
-            close(pf);
-
         }
 
-        sprintf(comando, "echo | python3 %s ", real_path);
-        //mandar_respuesta(socketfd,"200 OK", comando);
-    }
 
-    else if(strncmp(type_data, "php", strlen(real_path))==0){
-        printf("soy el loco pero en php\n");
+        if(strncmp(type_data, "py", strlen(real_path))==0){
+
+            if(flag==1) sprintf(comando, "python3 %s %s ", real_path, aux1);
+                
+            else sprintf(comando, "python3 %s ", real_path);
+            
+        }
+
+        else{
+
+            if(flag==1) sprintf(comando, "php %s %s ", real_path, aux1);
+                
+            else sprintf(comando, "php %s ", real_path);
+            
+        }
+
+        printf("\nCOMANDO ES: %s\n", comando);
+        file=popen(comando, "r");
+        if(!file)return;
+        
+        while (fgets(line, 1000, file) != NULL)
+        {
+            strcat(buffer2, line);
+        }
+        
+        send(socketfd, buffer2, strlen(buffer2), 0);
+
+        pclose(file);
+
     }
     
 
