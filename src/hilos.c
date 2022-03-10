@@ -9,6 +9,7 @@ void sig_thread_handler(int sig){
 
 
 void * thread_main(void *arg){
+    HiloArg *h;
     int connfd;
     Request *request=request_create();
     Request *copia;
@@ -16,7 +17,7 @@ void * thread_main(void *arg){
     struct sockaddr *cliaddr;
     cliaddr = malloc(addrlen);
 
-
+    h = (HiloArg*) arg;
     struct sigaction act;
 
     sigemptyset(&(act.sa_mask));
@@ -52,7 +53,7 @@ void * thread_main(void *arg){
 
         }
         //printf("soy koke\n");
-        connfd = accepto_connection(listenfd);
+        connfd = accept_connection(listenfd);
         //printf("soy kokepost accept\n");
          if(got_signal==1){
             //printf("salgo\n");
@@ -66,7 +67,7 @@ void * thread_main(void *arg){
         //printf("in mutex\n");
         pthread_mutex_unlock(&mlock);
         //tptr[*((int*) arg)].thread_count++;
-        procesar_conexion(connfd);
+        procesar_conexion(connfd,h->server_root,h->server_signature);
         //printf("hoola2\n");
     
         //launch_service(connfd);
@@ -80,8 +81,8 @@ void * thread_main(void *arg){
     }
 /* process request */
 }
-void thread_make(int i){
-
-    pthread_create(&tptr[i].thread_tid, NULL, &thread_main, (void *) &i); 
+void thread_make(HiloArg *h){
+    printf("thread make da %s y %s\n",h->server_root,h->server_signature);
+    pthread_create(&tptr[h->i].thread_tid, NULL, &thread_main, (void *) h);  
     return;
 }

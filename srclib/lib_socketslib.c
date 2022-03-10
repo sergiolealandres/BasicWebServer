@@ -2,7 +2,7 @@
 #include "../includes/lib_socketlib.h"
 
 
-int initiate_server(void){
+int initiate_server(long port,long max_connections){
 
     int sockval;
     struct sockaddr_in Direccion;
@@ -19,7 +19,7 @@ int initiate_server(void){
         syslog(LOG_ERR, "setsockopt(SO_REUSEADDR) failed");
 
     Direccion.sin_family=AF_INET; // TCP/IP family 
-    Direccion.sin_port=htons(NFC_SERVER_PORT); // Asigning port
+    Direccion.sin_port=htons(port); // Asigning port
     Direccion.sin_addr.s_addr=htonl(INADDR_ANY); // Accept all adresses
     bzero((void *)&(Direccion.sin_zero), 8);
 
@@ -30,7 +30,7 @@ int initiate_server(void){
     }
 
     syslog (LOG_INFO, "Listening connections");
-    if (listen (sockval, MAX_CONNECTIONS)<0){
+    if (listen (sockval, max_connections)<0){
         syslog(LOG_ERR, "Error listenining");
         exit(EXIT_FAILURE);
     }
@@ -57,7 +57,7 @@ void launch_service(int connval){
     return;
 }
 
-int accepto_connection(int sockval){
+int accept_connection(int sockval){
     //printf("HOOOOOOOOOLAAAAAAA\n");
     int desc, len;
     struct sockaddr Conexion;

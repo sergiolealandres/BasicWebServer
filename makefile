@@ -34,7 +34,7 @@ $(OBJ)/servidor.o: $(SRC)/servidor.c
 	$(CC) -c $(SRC)/servidor.c -o $(OBJ)/servidor.o
 
 servidor: $(OBJ)/servidor.o $(LIB)/lib_socketslib.a $(OBJ)/procesar.o $(OBJ)/picohttpparser.o $(OBJ)/hilos.o
-	$(CC) $(FLAGS) $^ -o $@ -lpthread
+	$(CC) $(FLAGS) $^ -o $@ -lpthread -lconfuse
 
 $(OBJ)/parsertest.o: $(SRC)/parsertest.c 
 	$(CC) -c $(SRC)/parsertest.c -o $(OBJ)/parsertest.o

@@ -18,6 +18,12 @@
 
 #define MAX_SIZE 2048
 
+typedef struct{
+    int i;
+    char *server_root;
+    char *server_signature;
+}HiloArg;
+
 typedef struct {
 
 pthread_t thread_tid;
@@ -33,11 +39,11 @@ socklen_t addrlen;
 pthread_mutex_t mlock;
 
 
-void thread_make(int i);
+void thread_make(HiloArg *h);
 
 
 void * thread_main(void *arg);
-int initiate_server(void);
+
 
 
 #endif

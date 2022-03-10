@@ -77,7 +77,7 @@ int tipo_fichero(char* path,char *tipo){
     return 0;
 }
 
-int procesar_conexion(int socketfd){
+int procesar_conexion(int socketfd,char *server_root, char * server_signature){
 
     char prueba[2048];
     char buf[4096];
@@ -133,7 +133,7 @@ int procesar_conexion(int socketfd){
     printf("\n");
 */
 
-    if (strncmp(request->method, "GET", request->method_len) == 0)get(socketfd, request);
+    if (strncmp(request->method, "GET", request->method_len) == 0)get(socketfd, request,server_root,server_signature);
 
 
     else if(strncmp(request->method, "POST", request->method_len) == 0)post(socketfd, request);
@@ -141,7 +141,7 @@ int procesar_conexion(int socketfd){
     return 0;
 }
 
-char * construir_cabecera(char *codigo,char *path_recurso){
+char * construir_cabecera(char *codigo,char *path_recurso,char *server_signature){
     struct stat attr;
     char *cabecera;
     char recursosfichero[3000];
@@ -160,7 +160,7 @@ char * construir_cabecera(char *codigo,char *path_recurso){
     tm = *gmtime(&now);
     strftime(date, sizeof date, "%a, %d %b %Y %H:%M:%S %Z", &tm);
     printf("PACO\n");
-    sprintf(cabecera,"HTTP/1.1  %s\r\nDate: %s\r\nServer: %s/%s\r\n",codigo,date,NOMBRE_SERVIDOR,VERSION_SERVIDOR);
+    sprintf(cabecera,"HTTP/1.1  %s\r\nDate: %s\r\nServer: %s\r\n",codigo,date,server_signature);
     //printf("Primera cabecera:\n%s\n", cabecera);
     if(path_recurso){
         stat(path_recurso,&attr);
@@ -184,7 +184,7 @@ char * construir_cabecera(char *codigo,char *path_recurso){
     return cabecera;
 }
 
-void mandar_respuesta(int socketfd,char *codigo,char *path){
+void mandar_respuesta(int socketfd,char *codigo,char *path,char *server_signature){
     char *cabecera;
     int f;
     long file_length=0;
@@ -193,7 +193,7 @@ void mandar_respuesta(int socketfd,char *codigo,char *path){
 
     if(!codigo) return;
     
-    if(!(cabecera=construir_cabecera(codigo,path)))return;
+    if(!(cabecera=construir_cabecera(codigo,path,server_signature)))return;
 
     send(socketfd,cabecera,strlen(cabecera),0);
 
@@ -217,7 +217,7 @@ void mandar_respuesta(int socketfd,char *codigo,char *path){
     free(cabecera);
 }
 
-void get(int socketfd, Request *r){
+void get(int socketfd, Request *r,char * server_root,char * server_signature){
     FILE *f;
     char real_path[MAX_PATH], real_path2[MAX_PATH], aux[MAX_PATH], *type_data=NULL, *aux1, *aux2, *aux3, *aux4, comando[2*MAX_SENT];
     int i, script=0;
@@ -229,7 +229,7 @@ void get(int socketfd, Request *r){
 
     //printf("En get\n");
     if (!r|| !(r->path)){
-        mandar_respuesta(socketfd,"400 Bad Request",NULL);
+        mandar_respuesta(socketfd,"400 Bad Request",NULL,server_signature);
         return;
     }
 
@@ -237,13 +237,14 @@ void get(int socketfd, Request *r){
     
     if(r->path_len==1){
         printf("eo1\n");
-        sprintf(real_path,"./index.html");
+        sprintf(real_path,"%s/index.html",server_root);
     }
 
     else{
         printf("eo2\n");
-    sprintf(real_path,".%.*s",(int)r->path_len,r->path);
+    sprintf(real_path,"%s%.*s",server_root,(int)r->path_len,r->path);
     sprintf(aux,"%.*s",(int)r->path_len,r->path);
+//    strncpy(aux, real_path, strlen(real_path));
     
     //strncpy(aux, real_path, strlen(real_path));
     printf("REAL PATHHHH%s\n", real_path);
@@ -302,12 +303,12 @@ void get(int socketfd, Request *r){
     printf("EL path es %s\n",real_path);
 
     if(!(f=fopen(real_path,"r"))){
-        mandar_respuesta(socketfd,"404 Not Found",NULL);
+        mandar_respuesta(socketfd,"404 Not Found",NULL,server_signature);
         return;
     }
 
     fclose(f);
-    mandar_respuesta(socketfd,"200 OK",real_path);
+    mandar_respuesta(socketfd,"200 OK",real_path,server_signature);
 
     return;
 }

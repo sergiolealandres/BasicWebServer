@@ -14,8 +14,8 @@
 #define NFC_SERVER_PORT 3000
 #define MAX_CONNECTIONS 10
 
-int initiate_server(void);
-int accepto_connection(int sockval);
+int initiate_server(long port, long max_connections);
+int accept_connection(int sockval);
 void launch_service(int connval);
 
 
