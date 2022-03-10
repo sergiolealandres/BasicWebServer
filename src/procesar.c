@@ -88,6 +88,9 @@ int procesar_conexion(int socketfd){
 
     if(!(request=request_create()))return -1;
 
+    
+    request->buflen=0;
+
     while (1) {
         /* read the request */
         while ((rret = read(socketfd, request->buf + request->buflen, sizeof(request->buf) - request->buflen)) == -1 && errno == EINTR)
@@ -141,6 +144,7 @@ int procesar_conexion(int socketfd){
 char * construir_cabecera(char *codigo,char *path_recurso){
     struct stat attr;
     char *cabecera;
+    char recursosfichero[3000];
     char date[1000],lastmodified[1000], tipo_fic[1000];
     int size_recurso;
     time_t now;
@@ -149,13 +153,13 @@ char * construir_cabecera(char *codigo,char *path_recurso){
     size_t len;
 
     if(!codigo) return NULL;
-    cabecera = (char*)malloc(MAX_HEADER);
+    cabecera = (char*)malloc(2*MAX_HEADER);
     if(!cabecera) return NULL;
 
     now = time(NULL);
     tm = *gmtime(&now);
     strftime(date, sizeof date, "%a, %d %b %Y %H:%M:%S %Z", &tm);
-
+    printf("PACO\n");
     sprintf(cabecera,"HTTP/1.1  %s\r\nDate: %s\r\nServer: %s/%s\r\n",codigo,date,NOMBRE_SERVIDOR,VERSION_SERVIDOR);
     //printf("Primera cabecera:\n%s\n", cabecera);
     if(path_recurso){
@@ -170,9 +174,12 @@ char * construir_cabecera(char *codigo,char *path_recurso){
         printf("Antes de tipo_fichero\n");
         if(tipo_fichero(path_recurso,tipo_fic)) return NULL;
         printf("Después de tipo_fichero\n");
-
-        sprintf(cabecera,"%sLast-Modified: %s\r\nContent-Length: %d\r\nContent-Type: %s\r\n\r\n",cabecera,lastmodified,size_recurso,tipo_fic);
+        printf("Las modified es:%s, \n content-length es %d\n content type es %s\n",lastmodified,size_recurso,tipo_fic);
+        printf("PACO\n");
+        sprintf(recursosfichero,"Last-Modified: %s\r\nContent-Length: %d\r\nContent-Type: %s\r\n\r\n",lastmodified,size_recurso,tipo_fic);
+        strcat(cabecera,recursosfichero);
     }
+    
     printf("La cabecera resultante es: \n\n%s\n\n",cabecera);
     return cabecera;
 }
@@ -214,35 +221,38 @@ void get(int socketfd, Request *r){
     FILE *f;
     char real_path[MAX_PATH], real_path2[MAX_PATH], aux[MAX_PATH], *type_data=NULL, *aux1, *aux2, *aux3, *aux4, comando[2*MAX_SENT];
     int i, script=0;
-    char realbuff[MAX_PATH];
+    char realbuff[MAX_PATH]="\0";
     FILE *file;
     char line[1000], buffer2[1000];
 
 
 
-    printf("En get\n");
+    //printf("En get\n");
     if (!r|| !(r->path)){
         mandar_respuesta(socketfd,"400 Bad Request",NULL);
         return;
     }
 
-    printf("pathlen es: %ld\n", r->path_len);
+    //printf("pathlen es: %ld\n", r->path_len);
     
     if(r->path_len==1){
-        
+        printf("eo1\n");
         sprintf(real_path,"./index.html");
     }
 
     else{
-
+        printf("eo2\n");
     sprintf(real_path,".%.*s",(int)r->path_len,r->path);
-    printf("eo, %s\n", real_path);
-    strncpy(aux, real_path, strlen(real_path));
+    sprintf(aux,"%.*s",(int)r->path_len,r->path);
     
-    printf("eo, %s\n", aux);
+    //strncpy(aux, real_path, strlen(real_path));
+    printf("REAL PATHHHH%s\n", real_path);
+    printf("eo2\n");
     type_data = strtok(aux, ".");
+    printf("eo2\n");
     type_data = strtok(NULL, "?");
-    printf("eo, %s\n", type_data);
+    printf("eo2\n");
+    
     if(strncmp(type_data, "py", strlen(real_path))==0   || strncmp(type_data, "php", strlen(real_path))==0){
 
         aux1=strtok(real_path, ".");
@@ -267,7 +277,7 @@ void get(int socketfd, Request *r){
             strtok(realbuff, "=");
             aux1=strtok(NULL, "=");
 
-            printf("AUX1!!!!!!  %s  %s\n", aux1, real_path);
+            
 
             if(strncmp(type_data, "py", strlen(real_path))==0)
 
@@ -277,18 +287,7 @@ void get(int socketfd, Request *r){
 
                 sprintf(comando, "php %s.php %s ", real_path, aux1);
 
-            printf("el comando formado es %s\n", comando);
-            file=popen(comando, "r");
-            if(!file)return;
-            
-            while (fgets(line, 1000, file) != NULL)
-            {
-                strcat(buffer2, line);
-            }
-            
-            send(socketfd, buffer2, strlen(buffer2), 0);
-
-            pclose(file);
+            executeAndPrintOnScreen(socketfd, comando);
 
 
         }
@@ -298,31 +297,7 @@ void get(int socketfd, Request *r){
     
     printf("eo\n");
     }
-    
-    /*
-    else{
-        /*
-        printf("Antes de prueba\n");
-        r->path[r->path_len]='\0';
-        printf("Después de prueba\n");
-        //printf("Caracteres: |");
-        for(i=0;i<(int)r->path_len-1;i++){
-            //printf("%c ",r->path[i]);
-            real_path[i]=r->path[i];
-        }
-        //printf("|\n");
-        i=0;
-        real_path[0]=r->path[0];
-        real_path[1]='\0';
 
-        //printf("r->path is %.*s\n", (int)r->path_len, r->path);
-
-        
-        sprintf(real_path,".%.*s",(int)r->path_len,r->path);
-    }
-    */
-    
-    
     printf("EL path de r es %.*s\n",(int)r->path_len, r->path);
     printf("EL path es %s\n",real_path);
 
@@ -340,7 +315,7 @@ void get(int socketfd, Request *r){
 
 void post(int socketfd, Request *r){
 
-    char* type_data=NULL, aux[10000], real_path[2000], comando[100000], buffer[100]="\0", *aux1=NULL, realbuff[100]="\0";
+    char* type_data=NULL, aux[2000]="\0", real_path[2000], comando[100000], buffer[100]="\0", *aux1=NULL, realbuff[100]="\0";
     int i, flag=0, size_recurso=-1;
     FILE *file;
     char line[1000] = "\0";
@@ -348,11 +323,15 @@ void post(int socketfd, Request *r){
 
    
     sprintf(real_path,".%.*s",(int)r->path_len,r->path);
-    strncpy(aux, real_path, strlen(real_path));
+    printf("eo\n");
+    sprintf(aux,"%.*s",(int)r->path_len,r->path);
+    //strncpy(aux, real_path, strlen(real_path));
     
-    
+    printf("eo\n");
     type_data = strtok(aux, ".");
+    printf("eo\n");
     type_data = strtok(NULL, "?");
+    printf("eo\n");
 
     if(strncmp(type_data, "py", strlen(real_path))==0   || strncmp(type_data, "php", strlen(real_path))==0){
 
@@ -369,13 +348,16 @@ void post(int socketfd, Request *r){
 
             size_recurso=atoi(r->headers[i-1].value);
             
-            strcpy(buffer, r->buf + r->buflen - size_recurso);
+            strncpy(buffer, r->buf + r->buflen - size_recurso, (size_t)size_recurso);
             aux1=strtok(buffer, "+");
             while(aux1!=NULL){            
 
                 strcat(realbuff, aux1);
+                printf("eo3\n");
                 strcat(realbuff, " ");
+                printf("eo1\n");
                 aux1=strtok(NULL, "+");
+                printf("eo2\n");
                 
             }
 
@@ -401,21 +383,30 @@ void post(int socketfd, Request *r){
             
         }
 
-        printf("\nCOMANDO ES: %s\n", comando);
-        file=popen(comando, "r");
-        if(!file)return;
+        executeAndPrintOnScreen(socketfd, comando);
         
-        while (fgets(line, 1000, file) != NULL)
-        {
-            strcat(buffer2, line);
-        }
-        
-        send(socketfd, buffer2, strlen(buffer2), 0);
-
-        pclose(file);
 
     }
     
+
+}
+
+int executeAndPrintOnScreen(int socketfd, char*comando){
+
+    FILE *file;
+    char buffer2[MAX_PATH]="\0", line[MAX_PATH];
+
+    file=popen(comando, "r");
+    if(!file)return -1;
+    
+    while (fgets(line, 1000, file) != NULL)
+    {
+        strcat(buffer2, line);
+    }
+    
+    send(socketfd, buffer2, strlen(buffer2), 0);
+
+    pclose(file);
 
 }
 

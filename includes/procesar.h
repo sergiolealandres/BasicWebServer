@@ -51,4 +51,5 @@ int procesar_conexion(int socketfd);
 char * construir_cabecera(char *codigo,char *path_recurso);
 void get(int socketfd, Request *r);
 void post(int socketfd, Request *r);
+int executeAndPrintOnScreen(int socketfd, char*comando);
 #endif

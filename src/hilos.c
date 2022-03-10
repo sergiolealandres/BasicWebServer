@@ -1,11 +1,10 @@
-#include "../includes/procesar.h"
 #include "../includes/hilos.h"
-#include "../includes/lib_socketlib.h"
 static volatile int got_signal=0;
 
 
 void sig_thread_handler(int sig){
     got_signal=1;
+    printf("señal recibida\n");
 }
 
 
@@ -16,40 +15,67 @@ void * thread_main(void *arg){
     socklen_t clilen;
     struct sockaddr *cliaddr;
     cliaddr = malloc(addrlen);
-    signal(SIGUSR2, sig_thread_handler);
+
+
+    struct sigaction act;
+
+    sigemptyset(&(act.sa_mask));
+    act.sa_flags=0;
+    act.sa_handler=sig_thread_handler;
+
+    sigaction(SIGUSR2, &act, NULL);
+
+
     //printf("thread %d starting\n", (int) arg);
     while (got_signal==0){
         clilen = addrlen;
-        printf("hoola222\n");
-        pthread_mutex_lock(&mlock);
+        //printf("hoola222\n");
+        //alarm(2);
+        while(pthread_mutex_lock(&mlock)){
+            if(errno != EINTR){
+            perror("sem_wait");
+            return 0;
+        }
 
-         if(got_signal==1){
+        if(got_signal==1){
             
+
+            break;
+        }
+        }
+        //printf("soy koke\n");
+         if(got_signal==1){
+            //printf("salgo\n");
             request_free(request);
+            //printf("salgo\n");
             pthread_exit(NULL);
 
         }
-
-        connfd = accept_connection(listenfd);
-
+        //printf("soy koke\n");
+        connfd = accepto_connection(listenfd);
+        //printf("soy kokepost accept\n");
          if(got_signal==1){
-            
+            //printf("salgo\n");
             request_free(request);
+            //printf("salgo\n");
             pthread_exit(NULL);
 
         }
-
-        printf("in mutex\n");
+        
+        //printf("soy koke\n");
+        //printf("in mutex\n");
         pthread_mutex_unlock(&mlock);
         //tptr[*((int*) arg)].thread_count++;
         procesar_conexion(connfd);
-        printf("hoola2\n");
+        //printf("hoola2\n");
     
         //launch_service(connfd);
         close(connfd);
     }
     if(got_signal==1){
+        //printf("salgo\n");
         request_free(request);
+        //printf("salgo\n");
         pthread_exit(NULL);
     }
 /* process request */

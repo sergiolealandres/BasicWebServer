@@ -13,6 +13,9 @@
 #include <pthread.h>
 #include <signal.h>
 
+#include "../includes/lib_socketlib.h"
+#include "../includes/procesar.h"
+
 #define MAX_SIZE 2048
 
 typedef struct {
@@ -37,5 +40,4 @@ void * thread_main(void *arg);
 int initiate_server(void);
 
 
-//int accept_connection(int sockval);
 #endif

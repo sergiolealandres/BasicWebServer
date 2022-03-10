@@ -13,11 +13,11 @@ int main(int argc, char **argv){
 
     int i;
     listenfd=initiate_server();
-    nthreads = 10;
+    nthreads = 2;
     tptr = calloc(nthreads, sizeof(Thread));
-    printf("hoola2\n");
+    //printf("hoola2\n");
     for (i = 0; i < nthreads; i++) thread_make(i);
-    printf("salgo del for\n");
+    
     signal(SIGINT, sig_int);
 
     while(got_signal==0)pause();
@@ -26,16 +26,9 @@ int main(int argc, char **argv){
     for (i = 0; i < nthreads; i++){
         printf("Cerrando hilo %d...\n", i);
         pthread_kill(tptr[i].thread_tid, SIGUSR2);
+        //pthread_join(tptr[i].thread_tid, NULL);
+        //printf("OHOOOOO\n");
 
     }
-/*
-    for (i = 0; i < nthreads; i++){
-        printf("Esperando al  hilo %d...\n", i);
-        pthread_join(tptr[i].thread_tid, NULL);
-        printf("HA LLEGADO EL %dº DOWN\n", i);
-
-    }
-    */
-    
 
 }
