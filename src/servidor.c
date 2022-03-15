@@ -77,7 +77,7 @@ int main(int argc, char **argv){
 
     cfg_free(cfg);
 
-    //do_daemon();
+    do_daemon();
 
     listenfd=initiate_server(listen_port,clients);
     nthreads = 3;
