@@ -132,7 +132,8 @@ int procesar_conexion(int socketfd,char *server_root, char * server_signature){
     }
     printf("\n");
 */
-
+    if(request->minor_version != 1) mandar_respuesta(socketfd,"505 HTTP Version Not Supported",NULL,server_signature,0);
+    
     if (strncmp(request->method, "GET", request->method_len) == 0)get(socketfd, request,server_root,server_signature);
 
 
@@ -140,6 +141,8 @@ int procesar_conexion(int socketfd,char *server_root, char * server_signature){
 
     else if(strncmp(request->method, "OPTIONS", request->method_len) == 0)options(socketfd, request,server_signature);
 
+    else mandar_respuesta(socketfd,"501 Not Implemented",NULL,server_signature,0);
+    
     return 0;
 }
 
