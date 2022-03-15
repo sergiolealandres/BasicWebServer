@@ -52,7 +52,7 @@ int procesar_conexion(int socketfd,char *server_root, char *server_signature);
 char * construir_cabecera(char *codigo,char *path_recurso,char *server_signature, int flagOptions);
 void get(int socketfd, Request *r,char *server_root,char *server_signature);
 void post(int socketfd, Request *r,char *server_root,char *server_signature);
-int executeAndPrintOnScreen(int socketfd, char*comando);
+int executeAndPrintOnScreen(int socketfd, char*comando,char* server_signature);
 void mandar_respuesta(int socketfd,char *codigo,char *path,char *server_signature, int flagOptions);
 void options(int socketfd, Request *request, char *server_signature);
 #endif
