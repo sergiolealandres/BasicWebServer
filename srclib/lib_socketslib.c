@@ -39,23 +39,6 @@ int initiate_server(long port,long max_connections){
 
     }
 
-void launch_service(int connval){
-    char *mensaje = "HTTP/1.1 200 OK\r\n\r\nHola Buenas Tardes\n";
-    int pid;
-    long type, aux;
-
-    syslog (LOG_INFO, "New access");
-    send(connval,mensaje, strlen(mensaje),0);
-    syslog (LOG_INFO, "Message sent");
-
-    //recv(connval, &aux, sizeof(long), 0);
-    //type = ntohl(aux);
-    //syslog (LOG_INFO, "Message received");
-    //database_access(connval, type, NULL);
-    close(connval);
-    syslog (LOG_INFO, "Exiting service");
-    return;
-}
 
 int accept_connection(int sockval){
     //printf("HOOOOOOOOOLAAAAAAA\n");
@@ -63,15 +46,17 @@ int accept_connection(int sockval){
     struct sockaddr Conexion;
 
     len = sizeof(Conexion);
-    //printf("pre accept\n");
+    printf("pre accept\n");
+    
     if ((desc = accept(sockval, &Conexion, &len))<0){
-        //printf("el locoooooooo\n");
+        printf("el locoooooooo\n");
+        
         if(errno==EINTR)return 0;
         
         syslog(LOG_ERR, "Error accepting connection");
         exit(EXIT_FAILURE);
     }
-    //printf("va bien accept\n");
+    printf("va bien accept\n");
 
     return desc;
 }

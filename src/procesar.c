@@ -4,12 +4,24 @@
 Request* request_create(){
 
     Request* request=(Request*)malloc(sizeof(Request));
+
+    
+
     return request;
 }
 
 void request_free(Request *request){
+    
+    if(request){
 
-    free(request);
+        //if(request->path)
+            //free(request->path);
+
+        //if(request->method)
+            //free(request->method);
+        free(request);
+
+    }
 
 }
 
@@ -139,6 +151,8 @@ int procesar_conexion(int socketfd,char *server_root, char * server_signature){
     else if(strncmp(request->method, "POST", request->method_len) == 0)post(socketfd, request,server_root,server_signature);
 
     else if(strncmp(request->method, "OPTIONS", request->method_len) == 0)options(socketfd, request,server_signature);
+
+    request_free(request);
 
     return 0;
 }
