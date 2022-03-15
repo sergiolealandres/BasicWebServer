@@ -303,7 +303,8 @@ void get(int socketfd, Request *r,char * server_root,char * server_signature){
 
                 sprintf(comando, "php %s.php %s ", real_path, aux1);
 
-            executeAndPrintOnScreen(socketfd, comando);
+            executeAndPrintOnScreen(socketfd, comando,server_signature);
+            return;
 
 
         }
@@ -403,16 +404,16 @@ void post(int socketfd, Request *r, char* server_root, char * server_signature){
             
         }
 
-        executeAndPrintOnScreen(socketfd, comando);
-        
+        executeAndPrintOnScreen(socketfd, comando,server_signature);
+        return;
 
     }
     
 
 }
 
-int executeAndPrintOnScreen(int socketfd, char*comando){
-
+int executeAndPrintOnScreen(int socketfd, char*comando, char* server_signature){
+    char *cabecera;
     FILE *file;
     char buffer2[MAX_PATH]="\0", line[MAX_PATH];
 
@@ -424,9 +425,15 @@ int executeAndPrintOnScreen(int socketfd, char*comando){
         strcat(buffer2, line);
     }
     
+    if(!(cabecera=construir_cabecera("200 OK",NULL,server_signature, 0)))return -1;
+
+    send(socketfd,cabecera,strlen(cabecera),0);
+
+
     send(socketfd, buffer2, strlen(buffer2), 0);
 
     pclose(file);
-
+    free(cabecera);
+    return 0;
 }
 
