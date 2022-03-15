@@ -4,12 +4,24 @@
 Request* request_create(){
 
     Request* request=(Request*)malloc(sizeof(Request));
+
+    
+
     return request;
 }
 
 void request_free(Request *request){
+    
+    if(request){
 
-    free(request);
+        //if(request->path)
+            //free(request->path);
+
+        //if(request->method)
+            //free(request->method);
+        free(request);
+
+    }
 
 }
 
@@ -141,7 +153,11 @@ int procesar_conexion(int socketfd,char *server_root, char * server_signature){
 
     else if(strncmp(request->method, "OPTIONS", request->method_len) == 0)options(socketfd, request,server_signature);
 
+    else if(strncmp(request->method, "HEAD", request->method_len) == 0)head(socketfd, request,server_root,server_signature);
+
     else mandar_respuesta(socketfd,"501 Not Implemented",NULL,server_signature,0);
+
+    request_free(request);
     
     return 0;
 }
@@ -153,6 +169,49 @@ void options(int socketfd, Request *request, char *server_signature){
     mandar_respuesta(socketfd,"200 OK",NULL,server_signature,1);
 
 }
+
+void head(int socketfd, Request *r, char *server_root, char *server_signature){
+
+
+    FILE *f;
+    char real_path[MAX_PATH], real_path2[MAX_PATH], aux[MAX_PATH], *type_data=NULL, *aux1, *aux2, *aux3, *aux4, comando[2*MAX_SENT];
+    int i, script=0;
+    char realbuff[MAX_PATH]="\0";
+    FILE *file;
+    char line[1000], buffer2[1000];
+
+
+
+    //printf("En get\n");
+    if (!r|| !(r->path)){
+        mandar_respuesta(socketfd,"400 Bad Request",NULL,server_signature,2);
+        return;
+    }
+
+    //printf("pathlen es: %ld\n", r->path_len);
+    
+    if(r->path_len==1){
+        printf("eo1\n");
+        sprintf(real_path,"%s/index.html",server_root);
+    }
+
+    else{
+
+        sprintf(real_path,"%s%.*s",server_root,(int)r->path_len,r->path);
+    }
+
+    if(!(f=fopen(real_path,"r"))){
+        mandar_respuesta(socketfd,"404 Not Found",NULL,server_signature,2);
+        return;
+    }
+
+    fclose(f);
+    mandar_respuesta(socketfd,"200 OK",real_path,server_signature,2);
+
+    return;
+
+}
+
 
 char * construir_cabecera(char *codigo,char *path_recurso,char *server_signature, int flagOptions){
     struct stat attr;
@@ -176,7 +235,8 @@ char * construir_cabecera(char *codigo,char *path_recurso,char *server_signature
     tm = *gmtime(&now);
     strftime(date, sizeof date, "%a, %d %b %Y %H:%M:%S %Z", &tm);
     printf("PACO\n");
-    if(flagOptions == 1){
+
+    if(flagOptions==1){
         sprintf(cabecera,"HTTP/1.1  %s\r\nAllow: %s\r\nDate: %s\r\nServer: %s\r\n",codigo,ALLOWS,date,server_signature);
     }
     else if(flagOptions == 2){
@@ -208,7 +268,7 @@ char * construir_cabecera(char *codigo,char *path_recurso,char *server_signature
     return cabecera2;
 }
 
-void mandar_respuesta(int socketfd,char *codigo,char *path,char *server_signature, int flagOptions){
+void mandar_respuesta(int socketfd,char *codigo,char *path,char *server_signature, int flagOption){
     char *cabecera;
     int f;
     long file_length=0;
@@ -217,11 +277,11 @@ void mandar_respuesta(int socketfd,char *codigo,char *path,char *server_signatur
 
     if(!codigo) return;
     
-    if(!(cabecera=construir_cabecera(codigo,path,server_signature, flagOptions)))return;
+    if(!(cabecera=construir_cabecera(codigo,path,server_signature, flagOption)))return;
 
     send(socketfd,cabecera,strlen(cabecera),0);
 
-    if(path){
+    if(path && flagOption!=2){
         if(!(f=open(path,O_RDONLY))) return;
         file_length = lseek(f, 0L, SEEK_END);
         lseek(f,0,0);

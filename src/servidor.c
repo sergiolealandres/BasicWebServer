@@ -80,7 +80,7 @@ int main(int argc, char **argv){
     //do_daemon();
 
     listenfd=initiate_server(listen_port,clients);
-    nthreads = 10;
+    nthreads = 3;
     tptr = calloc(nthreads, sizeof(Thread));
     printf("hoola2\n");
     for (i = 0; i < nthreads; i++){
@@ -104,16 +104,31 @@ int main(int argc, char **argv){
     for (i = 0; i < nthreads; i++){
         printf("Cerrando hilo %d...\n", i);
         pthread_kill(tptr[i].thread_tid, SIGUSR2);
-
+        
     }
-/*
+
+    
+
     for (i = 0; i < nthreads; i++){
         printf("Esperando al  hilo %d...\n", i);
         pthread_join(tptr[i].thread_tid, NULL);
         printf("HA LLEGADO EL %dº DOWN\n", i);
 
     }
-    */
+    printf("CIERROOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO\n");
+
+    for (i = 0; i < nthreads; i++){
+        
+        
+        free(h[i]->server_root);
+        free(h[i]->server_signature);
+        
+        free(h[i]);
+    } 
+
+    close(listenfd);
+    free(tptr);
+    
     
 
 }
