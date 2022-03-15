@@ -133,7 +133,7 @@ int procesar_conexion(int socketfd,char *server_root, char * server_signature){
     printf("\n");
 */
     if(request->minor_version != 1) mandar_respuesta(socketfd,"505 HTTP Version Not Supported",NULL,server_signature,0);
-    
+
     if (strncmp(request->method, "GET", request->method_len) == 0)get(socketfd, request,server_root,server_signature);
 
 
@@ -156,7 +156,7 @@ void options(int socketfd, Request *request, char *server_signature){
 
 char * construir_cabecera(char *codigo,char *path_recurso,char *server_signature, int flagOptions){
     struct stat attr;
-    char *cabecera;
+    char *cabecera,*cabecera2;
     char recursosfichero[3000];
     char date[1000],lastmodified[1000], tipo_fic[1000];
     int size_recurso;
@@ -169,12 +169,18 @@ char * construir_cabecera(char *codigo,char *path_recurso,char *server_signature
     cabecera = (char*)malloc(2*MAX_HEADER);
     if(!cabecera) return NULL;
 
+    cabecera2 = (char*)malloc(2*MAX_HEADER);
+    if(!cabecera2) return NULL;
+
     now = time(NULL);
     tm = *gmtime(&now);
     strftime(date, sizeof date, "%a, %d %b %Y %H:%M:%S %Z", &tm);
     printf("PACO\n");
-    if(flagOptions){
+    if(flagOptions == 1){
         sprintf(cabecera,"HTTP/1.1  %s\r\nAllow: %s\r\nDate: %s\r\nServer: %s\r\n",codigo,ALLOWS,date,server_signature);
+    }
+    else if(flagOptions == 2){
+        sprintf(cabecera,"HTTP/1.1  %s\r\nDate: %s\r\nServer: %s\r\n",codigo,date,server_signature);
     }
 
     else{
@@ -194,12 +200,12 @@ char * construir_cabecera(char *codigo,char *path_recurso,char *server_signature
         printf("Después de tipo_fichero\n");
         printf("Las modified es:%s, \n content-length es %d\n content type es %s\n",lastmodified,size_recurso,tipo_fic);
         printf("PACO\n");
-        sprintf(recursosfichero,"Last-Modified: %s\r\nContent-Length: %d\r\nContent-Type: %s\r\n\r\n",lastmodified,size_recurso,tipo_fic);
+        sprintf(recursosfichero,"Last-Modified: %s\r\nContent-Length: %d\r\nContent-Type: %s\r\n",lastmodified,size_recurso,tipo_fic);
         strcat(cabecera,recursosfichero);
     }
-    
-    printf("La cabecera resultante es: \n\n%s\n\n",cabecera);
-    return cabecera;
+    sprintf(cabecera2,"%s\r\n",cabecera);
+    printf("La cabecera resultante es: \n\n%s\n\n",cabecera2);
+    return cabecera2;
 }
 
 void mandar_respuesta(int socketfd,char *codigo,char *path,char *server_signature, int flagOptions){
@@ -416,27 +422,34 @@ void post(int socketfd, Request *r, char* server_root, char * server_signature){
 }
 
 int executeAndPrintOnScreen(int socketfd, char*comando, char* server_signature){
-    char *cabecera;
+    char cabecera[1000];
     FILE *file;
     char buffer2[MAX_PATH]="\0", line[MAX_PATH];
-
+    time_t now;
+    struct tm tm;
+    int acc = 0,aux;
+    char date[1000];
     file=popen(comando, "r");
     if(!file)return -1;
     
-    while (fgets(line, 1000, file) != NULL)
+    while (aux = fgets(line, 1000, file) != NULL)
     {
         strcat(buffer2, line);
     }
+    acc = strlen(buffer2);
     
-    if(!(cabecera=construir_cabecera("200 OK",NULL,server_signature, 0)))return -1;
+    now = time(NULL);
+    tm = *gmtime(&now);
+    strftime(date, sizeof date, "%a, %d %b %Y %H:%M:%S %Z", &tm);
 
+    sprintf(cabecera,"HTTP/1.1 200 OK\r\nDate: %s\r\nServer: %s\r\nContent-Length: %d\r\nContent-Type: text/plain\r\n\r\n",date,server_signature,acc);
+    printf("executeAndPrint\n");
+    printf("%s",cabecera);
+    printf("%s",buffer2);
     send(socketfd,cabecera,strlen(cabecera),0);
-
-
     send(socketfd, buffer2, strlen(buffer2), 0);
 
     pclose(file);
-    free(cabecera);
     return 0;
 }
 
