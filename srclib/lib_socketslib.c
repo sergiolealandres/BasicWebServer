@@ -46,17 +46,17 @@ int accept_connection(int sockval){
     struct sockaddr Conexion;
 
     len = sizeof(Conexion);
-    printf("pre accept\n");
+    //printf("pre accept\n");
     
     if ((desc = accept(sockval, &Conexion, &len))<0){
-        printf("el locoooooooo\n");
+        //printf("el locoooooooo\n");
         
         if(errno==EINTR)return 0;
         
         syslog(LOG_ERR, "Error accepting connection");
         exit(EXIT_FAILURE);
     }
-    printf("va bien accept\n");
+    //printf("va bien accept\n");
 
     return desc;
 }

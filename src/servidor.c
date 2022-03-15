@@ -107,7 +107,6 @@ int main(int argc, char **argv){
         
     }
 
-    
 
     for (i = 0; i < nthreads; i++){
         printf("Esperando al  hilo %d...\n", i);
