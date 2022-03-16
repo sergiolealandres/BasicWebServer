@@ -55,14 +55,14 @@ int tipo_fichero(char* path,char *tipo){
     int pos_punto;
 
     if(!path) return -1;
-    //printf("el path en tipofichero es %s\n",path);
+    //////printf("el path en tipofichero es %s\n",path);
     len = strlen(path);
     if(len < 5) return -1;
-    //printf("La última letra es %c\n",path[len-1]);
+    //////printf("La última letra es %c\n",path[len-1]);
 
     for(pos_punto=0;pos_punto<5&&path[len-pos_punto-1]!='.';pos_punto++);
     
-    //printf("pos_punto es %d\n",pos_punto);
+    //////printf("pos_punto es %d\n",pos_punto);
 
     if(pos_punto == 5) return -1;
 
@@ -73,7 +73,7 @@ int tipo_fichero(char* path,char *tipo){
     }
 
     final[i] = '\0';
-    //printf("final es %s\n",final);
+    //////printf("final es %s\n",final);
     if(!strcmp(final,".txt")) sprintf(tipo,"text/plain");
     else if (!strcmp(final,".html")) sprintf(tipo,"text/html");
     else if (!strcmp(final,".htm")) sprintf(tipo,"text/html");
@@ -105,11 +105,32 @@ int procesar_conexion(int socketfd,char *server_root, char * server_signature){
 
     while (1) {
         /* read the request */
-        printf("Antes de read, el socket es %d\n",socketfd);
+        //printf("Antes de read, el socket es %d\n",socketfd);
+        
+        struct timeval timeout;      
+        timeout.tv_sec = 3;
+        timeout.tv_usec = 0;
+        
+        if (setsockopt (socketfd, SOL_SOCKET, SO_RCVTIMEO, &timeout,
+                    sizeof timeout) < 0){
+                        perror("setsockopt failed\n");
+                        //printf("esto falla\n");
+                    }
+            
+
+        
+        //printf("Antes de readdddddddddddddddddddd, el socket es %d\n",socketfd);
+
         while ((rret = read(socketfd, request->buf + request->buflen, sizeof(request->buf) - request->buflen)) == -1){
+            //printf("HA PETAO\n");
             request_free(request);
-            if(errno == EINTR)return -1;
-        } 
+            if(errno == EWOULDBLOCK || errno==EINTR){
+                //printf("A TOMAR POR CULO\n");
+                return -1;
+            }
+            //printf("sigo leyendo................\n");
+        }
+
         if (rret <= 0){
             request_free(request);
             return -1;
@@ -120,7 +141,7 @@ int procesar_conexion(int socketfd,char *server_root, char * server_signature){
         request->buflen += rret;
         /* parse the request */
         request->num_headers = sizeof(request->headers) / sizeof(request->headers[0]);
-        printf("Antes del phr, socket es %d\n\n",socketfd);
+        //printf("Antes del phr, socket es %d\n\n",socketfd);
         pret = phr_parse_request(request->buf, request->buflen, (const char**) &(request->method), &(request->method_len),(const char**) &(request->path), &(request->path_len),
                                 &(request->minor_version), request->headers, &(request->num_headers), prevbuflen);
         //printf("pret es %d\n",pret);
@@ -140,23 +161,24 @@ int procesar_conexion(int socketfd,char *server_root, char * server_signature){
     }
 /*
     strncpy(prueba,request->path,request->path_len);
-    printf("HOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOLA\n");
-    printf("request is %d bytes long\n", pret);
-    printf("method is %.*s\n", (int)request->method_len, request->method);
-    printf("path is %.*s\n", (int)request->path_len, request->path);
-    printf("HTTP version is 1.%d\n", request->minor_version);
-    printf("headers:\n");
+    //printf("HOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOLA\n");
+    ////printf("request is %d bytes long\n", pret);
+    ////printf("method is %.*s\n", (int)request->method_len, request->method);
+    ////printf("path is %.*s\n", (int)request->path_len, request->path);
+    ////printf("HTTP version is 1.%d\n", request->minor_version);
+    ////printf("headers:\n");
     for (i = 0; i != request->num_headers; ++i) {
-        printf("%.*s: %.*s\n", (int)request->headers[i].name_len, request->headers[i].name,
+        ////printf("%.*s: %.*s\n", (int)request->headers[i].name_len, request->headers[i].name,
             (int)request->headers[i].value_len, request->headers[i].value);
     }
 
-    printf("Caracteres: ");
+    ////printf("Caracteres: ");
     for(i=0;i<(int)request->path_len;i++){
-        printf("%c ",request->path[i]);
+        ////printf("%c ",request->path[i]);
     }
-    printf("\n");
+    ////printf("\n");
 */
+    //printf("HOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOLA\n");
     if(request->minor_version != 1){
         mandar_respuesta(socketfd,"505 HTTP Version Not Supported",NULL,server_signature,0);
         request_free(request);
@@ -182,7 +204,7 @@ int procesar_conexion(int socketfd,char *server_root, char * server_signature){
 void options(int socketfd, Request *request, char *server_signature){
 
 
-    //printf("OPTIONS RECIBIDO\n");
+    //////printf("OPTIONS RECIBIDO\n");
     mandar_respuesta(socketfd,"200 OK",NULL,server_signature,1);
 
 }
@@ -199,16 +221,16 @@ void head(int socketfd, Request *r, char *server_root, char *server_signature){
 
 
 
-    //printf("En get\n");
+    //////printf("En get\n");
     if (!r|| !(r->path)){
         mandar_respuesta(socketfd,"400 Bad Request",NULL,server_signature,2);
         return;
     }
 
-    //printf("pathlen es: %ld\n", r->path_len);
+    //////printf("pathlen es: %ld\n", r->path_len);
     
     if(r->path_len==1){
-        //printf("eo1\n");
+        //////printf("eo1\n");
         sprintf(real_path,"%s/index.html",server_root);
     }
 
@@ -249,7 +271,7 @@ char * construir_cabecera(char *codigo,char *path_recurso,char *server_signature
     now = time(NULL);
     tm = *gmtime(&now);
     strftime(date, sizeof date, "%a, %d %b %Y %H:%M:%S %Z", &tm);
-    //printf("PACO\n");
+    //////printf("PACO\n");
 
     if(flagOptions==1){
         sprintf(cabecera,"HTTP/1.1  %s\r\nAllow: %s\r\nDate: %s\r\nServer: %s\r\n",codigo,ALLOWS,date,server_signature);
@@ -270,16 +292,16 @@ char * construir_cabecera(char *codigo,char *path_recurso,char *server_signature
         size_recurso = ftell(f);
         fclose(f);
         //get the file type
-        //printf("Antes de tipo_fichero\n");
+        //////printf("Antes de tipo_fichero\n");
         if(tipo_fichero(path_recurso,tipo_fic)) return NULL;
-        //printf("Después de tipo_fichero\n");
-        //printf("Las modified es:%s, \n content-length es %d\n content type es %s\n",lastmodified,size_recurso,tipo_fic);
-        //printf("PACO\n");
+        //////printf("Después de tipo_fichero\n");
+        //////printf("Las modified es:%s, \n content-length es %d\n content type es %s\n",lastmodified,size_recurso,tipo_fic);
+        //////printf("PACO\n");
         sprintf(recursosfichero,"Last-Modified: %s\r\nContent-Length: %d\r\nContent-Type: %s\r\n",lastmodified,size_recurso,tipo_fic);
         strcat(cabecera,recursosfichero);
     }
     sprintf(cabecera2,"%s\r\n",cabecera);
-    printf("La cabecera resultante es: \n\n%s\n\n",cabecera2);
+    //printf("La cabecera resultante es: \n\n%s\n\n",cabecera2);
     return cabecera2;
 }
 
@@ -304,9 +326,9 @@ void mandar_respuesta(int socketfd,char *codigo,char *path,char *server_signatur
         acc_sent=0;
         while(acc_sent<file_length){
             aux =sendfile(socketfd,f,NULL,file_length);
-            //printf("aux es %ld\n",aux);
+            //////printf("aux es %ld\n",aux);
             acc_sent += aux;
-            //printf("acc_sent es %ld y file_length es %ld\n",acc_sent,file_length);
+            //////printf("acc_sent es %ld y file_length es %ld\n",acc_sent,file_length);
         }
 
         close(f);
@@ -326,39 +348,39 @@ void get(int socketfd, Request *r,char * server_root,char * server_signature){
 
 
 
-    //printf("En get\n");
+    //////printf("En get\n");
     if (!r|| !(r->path)){
         mandar_respuesta(socketfd,"400 Bad Request",NULL,server_signature,0);
         return;
     }
 
-    //printf("pathlen es: %ld\n", r->path_len);
+    //////printf("pathlen es: %ld\n", r->path_len);
     
     if(r->path_len==1){
-        //printf("eo1\n");
+        //////printf("eo1\n");
         sprintf(real_path,"%s/index.html",server_root);
     }
 
     else{
-        //printf("eo2\n");
+        //////printf("eo2\n");
     sprintf(real_path,"%s%.*s",server_root,(int)r->path_len,r->path);
     sprintf(aux,"%.*s",(int)r->path_len,r->path);
 //    strncpy(aux, real_path, strlen(real_path));
     
     //strncpy(aux, real_path, strlen(real_path));
-    //printf("REAL PATHHHH%s\n", real_path);
-    //printf("eo2\n");
+    //////printf("REAL PATHHHH%s\n", real_path);
+    //////printf("eo2\n");
     type_data = strtok(aux, ".");
-    //printf("eo2\n");
+    //////printf("eo2\n");
     type_data = strtok(NULL, "?");
-    //printf("eo2\n");
+    //////printf("eo2\n");
     
     if(strncmp(type_data, "py", strlen(real_path))==0   || strncmp(type_data, "php", strlen(real_path))==0){
 
         aux1=strtok(real_path, ".");
         aux2=strtok(NULL, ".");
 
-        //printf("AUX1 Y AUX2: %s     %s\n", aux1, aux2);
+        //////printf("AUX1 Y AUX2: %s     %s\n", aux1, aux2);
 
         if(strncmp(aux2, "py", strlen(type_data))==0   || strncmp(aux2, "php", strlen(type_data))==0){
             
@@ -398,11 +420,11 @@ void get(int socketfd, Request *r,char * server_root,char * server_signature){
 
     }
     
-    //printf("eo\n");
+    //////printf("eo\n");
     }
 
-    //printf("EL path de r es %.*s\n",(int)r->path_len, r->path);
-    //printf("EL path es %s\n",real_path);
+    //////printf("EL path de r es %.*s\n",(int)r->path_len, r->path);
+    //////printf("EL path es %s\n",real_path);
 
     if(!(f=fopen(real_path,"r"))){
         mandar_respuesta(socketfd,"404 Not Found",NULL,server_signature,0);
@@ -424,28 +446,28 @@ void post(int socketfd, Request *r, char* server_root, char * server_signature){
     char line[1000] = "\0";
     char buffer2[1000];
 
-    //printf("POST DETECTADO\n");
+    //////printf("POST DETECTADO\n");
     sprintf(real_path,".%.*s",(int)r->path_len,r->path);
 
     realreal_path=strtok(real_path, "?");
 
 
-    //printf("eo\n");
+    //////printf("eo\n");
     sprintf(aux,"%.*s",(int)r->path_len,r->path);
     //strncpy(aux, real_path, strlen(real_path));
-    //printf("AUX ES %s\n", realreal_path);
-    //printf("eo\n");
+    //////printf("AUX ES %s\n", realreal_path);
+    //////printf("eo\n");
     type_data = strtok(aux, ".");
-    //printf("eo\n");
+    //////printf("eo\n");
     type_data = strtok(NULL, "?");
-    //printf("eo\n");
+    //////printf("eo\n");
 
     if(strncmp(type_data, "py", strlen(real_path))==0   || strncmp(type_data, "php", strlen(real_path))==0){
 
         for(i=0;i<r->num_headers&&flag==0;i++){
 
             if(strncmp(r->headers[i].name, "Content-Length:", 15)==0){
-                //printf("flag=1\n");
+                //////printf("flag=1\n");
                 flag=1;
             }
         }
@@ -460,11 +482,11 @@ void post(int socketfd, Request *r, char* server_root, char * server_signature){
             while(aux1!=NULL){            
 
                 strcat(realbuff, aux1);
-                //printf("eo3\n");
+                //////printf("eo3\n");
                 strcat(realbuff, " ");
-                //printf("eo1\n");
+                //////printf("eo1\n");
                 aux1=strtok(NULL, "+");
-                //printf("eo2\n");
+                //////printf("eo2\n");
                 
             }
 
@@ -505,7 +527,7 @@ int executeAndPrintOnScreen(int socketfd, char*comando, char* server_signature){
     time_t now;
     struct tm tm;
     int acc = 0,aux;
-    char date[1000];
+    char date[100];
     file=popen(comando, "r");
     if(!file)return -1;
     
@@ -520,9 +542,9 @@ int executeAndPrintOnScreen(int socketfd, char*comando, char* server_signature){
     strftime(date, sizeof date, "%a, %d %b %Y %H:%M:%S %Z", &tm);
 
     sprintf(cabecera,"HTTP/1.1 200 OK\r\nDate: %s\r\nServer: %s\r\nContent-Length: %d\r\nContent-Type: text/plain\r\n\r\n",date,server_signature,acc);
-    //printf("executeAndPrint\n");
-    //printf("%s",cabecera);
-    //printf("%s",buffer2);
+    //////printf("executeAndPrint\n");
+    //////printf("%s",cabecera);
+    //////printf("%s",buffer2);
     send(socketfd,cabecera,strlen(cabecera),0);
     send(socketfd, buffer2, strlen(buffer2), 0);
 

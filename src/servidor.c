@@ -37,6 +37,10 @@ void sig_int(int signal){
     got_signal=1;
 }
 
+void sig_pipe(int signal){
+    
+}
+
 int main(int argc, char **argv){
 
     int i;
@@ -44,7 +48,7 @@ int main(int argc, char **argv){
     long clients = 10;
     long listen_port = 3000;
     char server_signature[MAX_SIZE];
-    
+    struct sigaction act;
     HiloArg *h[MAX_HILOS];
 
 
@@ -77,12 +81,23 @@ int main(int argc, char **argv){
 
     cfg_free(cfg);
 
-    //do_daemon();
+
+    sigemptyset(&(act.sa_mask));
+    act.sa_flags=0;
+    act.sa_handler=sig_int;
+
+    sigaction(SIGINT, &act, NULL);
+
+    act.sa_handler=sig_pipe;
+
+    sigaction(SIGPIPE, &act, NULL);
+
+    do_daemon();
 
     listenfd=initiate_server(listen_port,clients);
-    nthreads = 3;
+    nthreads = 10;
     tptr = calloc(nthreads, sizeof(Thread));
-    printf("hoola2\n");
+    //printf("hoola2\n");
     for (i = 0; i < nthreads; i++){
         h[i] = (HiloArg *)malloc(sizeof(HiloArg));
         h[i]->i = i;
@@ -90,31 +105,30 @@ int main(int argc, char **argv){
         h[i]->server_signature = (char*)malloc(MAX_SIZE);
         strncpy(h[i]->server_root,server_root,strlen(server_root)+1);
         strncpy(h[i]->server_signature,server_signature,strlen(server_signature)+1);
-        printf("k\n");
-        printf("los stirngs son %s y %s\n",h[i]->server_root,h[i]->server_signature);
+        //printf("k\n");
+        //printf("los stirngs son %s y %s\n",h[i]->server_root,h[i]->server_signature);
 
         thread_make((h[i]));
     } 
-    printf("salgo del for\n");
-    signal(SIGINT, sig_int);
+    //printf("salgo del for\n");
 
     while(got_signal==0)pause();
 
 
     for (i = 0; i < nthreads; i++){
-        printf("Cerrando hilo %d...\n", i);
+        //printf("Cerrando hilo %d...\n", i);
         pthread_kill(tptr[i].thread_tid, SIGUSR2);
         
     }
 
 
     for (i = 0; i < nthreads; i++){
-        printf("Esperando al  hilo %d...\n", i);
+        //printf("Esperando al  hilo %d...\n", i);
         pthread_join(tptr[i].thread_tid, NULL);
-        printf("HA LLEGADO EL %dº DOWN\n", i);
+        //printf("HA LLEGADO EL %dº DOWN\n", i);
 
     }
-    printf("CIERROOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO\n");
+    //printf("CIERROOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO\n");
 
     for (i = 0; i < nthreads; i++){
         
