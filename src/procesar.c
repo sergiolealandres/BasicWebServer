@@ -121,7 +121,7 @@ void head(int socketfd, Request *r, char *server_root, char *server_signature){
 
 
     if (!r|| !(r->path)){
-        mandar_respuesta(socketfd,"400 Bad Request",NULL,server_signature,0);
+        mandar_respuesta(socketfd,"400 Bad Request",NULL,server_signature,-1);
         return;
     }
 
@@ -136,7 +136,7 @@ void head(int socketfd, Request *r, char *server_root, char *server_signature){
     }
 
     if(!(f=fopen(real_path,"r"))){
-        mandar_respuesta(socketfd,"404 Not Found",NULL,server_signature,0);
+        mandar_respuesta(socketfd,"404 Not Found",NULL,server_signature,-1);
         return;
     }
 
@@ -195,6 +195,7 @@ char * construir_cabecera(char *codigo,char *path_recurso,char *server_signature
 void mandar_respuesta(int socketfd,char *codigo,char *path,char *server_signature, int flagOption){
     char *cabecera;
     int f;
+    char codigoError[SMALL_SIZE];
     long file_length=0;
     long acc_sent = 0;
     ssize_t aux;
@@ -204,7 +205,10 @@ void mandar_respuesta(int socketfd,char *codigo,char *path,char *server_signatur
     if(!(cabecera=construir_cabecera(codigo,path,server_signature, flagOption)))return;
 
     send(socketfd,cabecera,strlen(cabecera),0);
-
+    if(flagOption == -1){
+        sprintf(codigoError,"Error: %s\r\n\r\n",codigo);
+        send(socketfd,codigoError,strlen(codigoError),0);
+    }
     if(path && flagOption!=2){
         if(!(f=open(path,O_RDONLY))) return;
         file_length = lseek(f, 0L, SEEK_END);
@@ -234,7 +238,7 @@ void get(int socketfd, Request *r,char * server_root,char * server_signature){
 
 
     if (!r|| !(r->path)){
-        mandar_respuesta(socketfd,"400 Bad Request",NULL,server_signature,0);
+        mandar_respuesta(socketfd,"400 Bad Request",NULL,server_signature,-1);
         return;
     }
     
@@ -277,7 +281,7 @@ void get(int socketfd, Request *r,char * server_root,char * server_signature){
         }
     }
     if(!(f=fopen(real_path,"r"))){
-        mandar_respuesta(socketfd,"404 Not Found",NULL,server_signature,0);
+        mandar_respuesta(socketfd,"404 Not Found",NULL,server_signature,-1);
         return;
     }
 
@@ -298,7 +302,7 @@ void post(int socketfd, Request *r, char* server_root, char * server_signature){
     
 
     if (!r|| !(r->path)){
-        mandar_respuesta(socketfd,"400 Bad Request",NULL,server_signature,0);
+        mandar_respuesta(socketfd,"400 Bad Request",NULL,server_signature,-1);
         return;
     }
 

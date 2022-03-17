@@ -24,7 +24,7 @@
 #define MAX_HEADER 4096
 #define NOMBRE_SERVIDOR "Elpeonkamikaze"
 #define VERSION_SERVIDOR "1.0"
-#define ALLOWS "OPTIONS, GET, POST"
+#define ALLOWS "OPTIONS, GET, POST, HEAD"
 #define MAX_ANSWER 131072
 #define MAX_PATH 2048
 #define ONE_KB 1024
