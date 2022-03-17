@@ -35,6 +35,7 @@ void do_daemon(void){
 
 void sig_int(int signal){
     got_signal=1;
+    
 }
 
 void sig_pipe(int signal){
@@ -68,6 +69,7 @@ int main(int argc, char **argv){
     if(cfg_parse(cfg, "server.conf") == CFG_PARSE_ERROR)
         return 1;
 
+    //Obtenemos toda la información necesaria acerca de la configuración del servidor
     strncpy(server_root, cfg_getstr(cfg,"server_root"),MAX_SIZE);
     clients = cfg_getint(cfg,"max_clients");
     listen_port = cfg_getint(cfg,"listen_port");
@@ -81,7 +83,7 @@ int main(int argc, char **argv){
 
     cfg_free(cfg);
 
-
+    //Establecemos manejadores para las señales SIGINT y SIGPIPE
     sigemptyset(&(act.sa_mask));
     act.sa_flags=0;
     act.sa_handler=sig_int;
@@ -92,12 +94,16 @@ int main(int argc, char **argv){
 
     sigaction(SIGPIPE, &act, NULL);
 
-    do_daemon();
+    // do_daemon(); //Demonizamos el servidor
 
-    listenfd=initiate_server(listen_port,clients);
-    nthreads = 10;
+    listenfd=initiate_server(listen_port,clients);//Lanzamos el servidor, obteniendo el socket
+
+    nthreads = MAX_HILOS;//Fijamos el número de hilos que utilizaremos
+
+    //Inicializamos las estructuras de los hilos
     tptr = calloc(nthreads, sizeof(Thread));
-    //printf("hoola2\n");
+
+    
     for (i = 0; i < nthreads; i++){
         h[i] = (HiloArg *)malloc(sizeof(HiloArg));
         h[i]->i = i;
@@ -105,42 +111,40 @@ int main(int argc, char **argv){
         h[i]->server_signature = (char*)malloc(MAX_SIZE);
         strncpy(h[i]->server_root,server_root,strlen(server_root)+1);
         strncpy(h[i]->server_signature,server_signature,strlen(server_signature)+1);
-        //printf("k\n");
-        //printf("los stirngs son %s y %s\n",h[i]->server_root,h[i]->server_signature);
 
-        thread_make((h[i]));
+        thread_make((h[i]));//Lanzamos el i-ésimo hilo
     } 
-    //printf("salgo del for\n");
 
-    while(got_signal==0)pause();
+
+    while(got_signal==0)pause();//Mientras no se reciba SIGINT
 
 
     for (i = 0; i < nthreads; i++){
-        //printf("Cerrando hilo %d...\n", i);
+        
         pthread_kill(tptr[i].thread_tid, SIGUSR2);
+        //Enviamos SIGUSR2 a todos los hilos para que terminen correctamente
         
     }
 
 
     for (i = 0; i < nthreads; i++){
-        //printf("Esperando al  hilo %d...\n", i);
-        pthread_join(tptr[i].thread_tid, NULL);
-        //printf("HA LLEGADO EL %dº DOWN\n", i);
-
+       
+        pthread_join(tptr[i].thread_tid, NULL);//Hacemos join de los hilos
+        
     }
-    //printf("CIERROOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO\n");
+    
 
-    for (i = 0; i < nthreads; i++){
-        
-        
+    for (i = 0; i < nthreads; i++){//Liberamos las estructuras de los hilos
+         
         free(h[i]->server_root);
-        free(h[i]->server_signature);
-        
+        free(h[i]->server_signature); 
         free(h[i]);
     } 
 
-    close(listenfd);
-    free(tptr);
+    close(listenfd);//Cerramos el socket
+    free(tptr);//Liberamos la estructura de hilos
+
+    return 0;
     
     
 

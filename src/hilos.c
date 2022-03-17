@@ -4,8 +4,8 @@ static volatile int got_signal=0;
 
 void sig_thread_handler(int sig){
     got_signal=1;
-    //printf("señal recibida\n");
-    //pthread_exit(NULL);
+    
+
 }
 
 void sig_pipe1(int signal){
@@ -15,9 +15,7 @@ void sig_pipe1(int signal){
 
 void * thread_main(void *arg){
     HiloArg *h;
-    int connfd;
-    
-    socklen_t clilen;
+    int connfd=-1;
 
     h = (HiloArg*) arg;
     struct sigaction act;
@@ -26,66 +24,63 @@ void * thread_main(void *arg){
     act.sa_flags=0;
     act.sa_handler=sig_thread_handler;
 
+    //Añadimos un manejador para asegurarnos del cierre y salida correcta de los hilos
     sigaction(SIGUSR2, &act, NULL);
 
     act.sa_handler=sig_pipe1;
 
+    //Ignoramos la señal SIGPIPE
     sigaction(SIGPIPE, &act, NULL);
-
-
-    ////printf("thread %d starting\n", (int) arg);
-    while (got_signal==0){
-        clilen = addrlen;
-        ////printf("hoola222\n");
-        //alarm(2);
-        ////printf("waiting in mutex, %d\n",h->i);
-        pthread_mutex_lock(&mlock);
-        ////printf("Justo despues de lock, %d\n",h->i);
-
-        if(got_signal==1){
-                
-            
-            pthread_mutex_unlock(&mlock);
-            ////printf("salgo despues de lock, %d\n",h->i);
-            return NULL;
-            pthread_exit(NULL);
-        }
-        ////printf("soy koke\n");
-        connfd = accept_connection(listenfd);
-        ////printf("soy kokepost accept\n");
-         if(got_signal==1){
-            ////printf("salgo del accept ,%d\n",h->i);
-            
-            pthread_mutex_unlock(&mlock);
-            ////printf("salgo despues de unlock accept %d,\n",h->i);
-            return NULL;
-            pthread_exit(NULL);
-
-        }
-        
-        ////printf("soy koke\n");
-        ////printf("in mutex\n");
-        pthread_mutex_unlock(&mlock);
-        ////printf("Despues del unlock%d, socket es %d\n",h->i,connfd);
-        //tptr[*((int*) arg)].thread_count++;
-        procesar_conexion(connfd,h->server_root,h->server_signature);
-        ////printf("hoola2\n");
     
-        //launch_service(connfd);
-        close(connfd);
-        ////printf("Al final del bucle, %d\n",h->i);
-    }
-    if(got_signal==1){
-        ////printf("salgo fuera del while, %d\n",h->i);
+    
+    while (got_signal==0){
         
-        ////printf("salgo\n");
+
+        pthread_mutex_lock(&mlock);
+        if(got_signal==1){//En caso de recibir SIGUSR2 debe de salir
+        
+            pthread_mutex_unlock(&mlock);
+
+            return NULL;
+            pthread_exit(NULL);
+        }
+        //Un hilo acepta una conexión
+
+        
+
+        connfd = accept_connection(listenfd);
+        
+
+        if(got_signal==1){//En caso de recibir SIGUSR2 debe de salir
+                 
+            pthread_mutex_unlock(&mlock);
+            if(connfd)close(connfd);
+            return NULL;
+            pthread_exit(NULL);
+
+        }
+        
+        pthread_mutex_unlock(&mlock);//Levanta el semáforo para que pase otro hilo
+
+        
+
+        procesar_conexion(connfd,h->server_root,h->server_signature);//Procesa la petición que ha recibido
+
+        close(connfd);//Cierra el socket particular que había abierto para esa conexión
+
+    }
+    //En caso de que le llegue la señal SIGUSR2 en un momento diferente al down del
+    //mutex o el accept también debe de salir correctamente
+    if(got_signal==1){
+        if(connfd)close(connfd);
         return NULL;
         pthread_exit(NULL);
     }
-/* process request */
+
 }
+
 void thread_make(HiloArg *h){
-    //printf("thread make da %s y %s\n",h->server_root,h->server_signature);
+    //Función auxiliar para lanzar los hilos
     pthread_create(&tptr[h->i].thread_tid, NULL, &thread_main, (void *) h);  
-    return;
+    
 }

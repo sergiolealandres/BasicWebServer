@@ -25,9 +25,10 @@
 #define NOMBRE_SERVIDOR "Elpeonkamikaze"
 #define VERSION_SERVIDOR "1.0"
 #define ALLOWS "OPTIONS, GET, POST"
-#define MAX_ANSWER 100000
+#define MAX_ANSWER 131072
 #define MAX_PATH 2048
-#define MAX_SENT 2048
+#define ONE_KB 1024
+#define SMALL_SIZE 128
 
 typedef struct {
 
@@ -35,7 +36,7 @@ typedef struct {
     size_t method_len;
     char *path;
     size_t path_len;
-    struct phr_header headers[100];
+    struct phr_header headers[SMALL_SIZE];
     size_t num_headers;
     int minor_version;
     char buf[MAX_HEADER];
@@ -45,7 +46,6 @@ typedef struct {
 } Request;
 
 Request* request_copy(Request *r);
-int parsear_conexion(int socketfd, Request** request);
 Request* request_create();
 void request_free(Request *request);
 int procesar_conexion(int socketfd,char *server_root, char *server_signature);
@@ -56,4 +56,7 @@ int executeAndPrintOnScreen(int socketfd, char*comando,char* server_signature);
 void mandar_respuesta(int socketfd,char *codigo,char *path,char *server_signature, int flagOptions);
 void options(int socketfd, Request *request, char *server_signature);
 void head(int socketfd, Request *r, char *server_root, char *server_signature);
+void clean_path_get(char **dirtypath, char*cleanpath);
+int searchForContentLenght(Request *r, int *position);
+int parsear_peticion(int socketfd, Request **request);
 #endif

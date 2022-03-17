@@ -5,7 +5,7 @@ OBJ=./obj
 INC=./includes
 
 CC=gcc
-FLAGS=-g -Wall
+FLAGS=-g -Wall -Wno-unused
 EXE = servidor clean
 OBJECTS = $(OBJ)/lib_socketslib.o $(OBJ)/picohttpparser.o $(OBJ)/hilos.o $(OBJ)/procesar.o $(OBJ)/servidor.o
 LIBS =  $(LIB)/lib_socketslib.a $(LIB)/picohttpparser.a

@@ -41,22 +41,19 @@ int initiate_server(long port,long max_connections){
 
 
 int accept_connection(int sockval){
-    //printf("HOOOOOOOOOLAAAAAAA\n");
+    
     int desc, len;
     struct sockaddr Conexion;
 
     len = sizeof(Conexion);
-    //printf("pre accept\n");
     
     if ((desc = accept(sockval, &Conexion, &len))<0){
-        //printf("el locoooooooo\n");
         
-        if(errno==EINTR)return 0;
+        if(errno==EINTR )return 0;
         
         syslog(LOG_ERR, "Error accepting connection");
         exit(EXIT_FAILURE);
     }
-    //printf("va bien accept\n");
 
     return desc;
 }

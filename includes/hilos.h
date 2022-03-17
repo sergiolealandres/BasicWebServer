@@ -33,9 +33,7 @@ long thread_count;
 
 Thread *tptr;
 
-
 int listenfd, nthreads;
-socklen_t addrlen;
 pthread_mutex_t mlock;
 
 

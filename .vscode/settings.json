@@ -1,5 +1,6 @@
 {
     "files.associations": {
-        "picohttpparser.h": "c"
+        "picohttpparser.h": "c",
+        "confuse.h": "c"
     }
 }
