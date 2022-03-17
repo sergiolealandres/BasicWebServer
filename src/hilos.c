@@ -1,3 +1,11 @@
+/**********************************
+ * @author Pablo Soto y Sergio Leal
+ * Grupo 2301
+ * Redes de Comunicaciones II
+ * Práctica 1:Servidor Web
+ * Curso 21/22
+ * *******************************/
+
 #include "../includes/hilos.h"
 
 void sig_thread_handler(int sig){
