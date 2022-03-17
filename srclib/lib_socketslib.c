@@ -13,7 +13,7 @@ int initiate_server(long port,long max_connections){
         exit(EXIT_FAILURE);
     }
 
-
+    
     int reuse = 1;
     if (setsockopt(sockval, SOL_SOCKET, SO_REUSEADDR, (const char*)&reuse, sizeof(reuse)) < 0)
         syslog(LOG_ERR, "setsockopt(SO_REUSEADDR) failed");
@@ -22,13 +22,14 @@ int initiate_server(long port,long max_connections){
     Direccion.sin_port=htons(port); // Asigning port
     Direccion.sin_addr.s_addr=htonl(INADDR_ANY); // Accept all adresses
     bzero((void *)&(Direccion.sin_zero), 8);
-
+    
     syslog (LOG_INFO, "Binding socket");
     if (bind (sockval, (struct sockaddr *)&Direccion, sizeof(Direccion))<0){
         syslog(LOG_ERR, "Error binding socket");
+        
         exit(EXIT_FAILURE);
     }
-
+    
     syslog (LOG_INFO, "Listening connections");
     if (listen (sockval, max_connections)<0){
         syslog(LOG_ERR, "Error listenining");
@@ -42,7 +43,8 @@ int initiate_server(long port,long max_connections){
 
 int accept_connection(int sockval){
     
-    int desc, len;
+    int desc;
+    unsigned int len;
     struct sockaddr Conexion;
 
     len = sizeof(Conexion);
