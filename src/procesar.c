@@ -121,7 +121,7 @@ void head(int socketfd, Request *r, char *server_root, char *server_signature){
 
 
     if (!r|| !(r->path)){
-        mandar_respuesta(socketfd,"400 Bad Request",NULL,server_signature,2);
+        mandar_respuesta(socketfd,"400 Bad Request",NULL,server_signature,0);
         return;
     }
 
@@ -136,7 +136,7 @@ void head(int socketfd, Request *r, char *server_root, char *server_signature){
     }
 
     if(!(f=fopen(real_path,"r"))){
-        mandar_respuesta(socketfd,"404 Not Found",NULL,server_signature,2);
+        mandar_respuesta(socketfd,"404 Not Found",NULL,server_signature,0);
         return;
     }
 
@@ -170,10 +170,6 @@ char * construir_cabecera(char *codigo,char *path_recurso,char *server_signature
     if(flagOptions==1){
         sprintf(cabecera,"HTTP/1.1  %s\r\nAllow: %s\r\nDate: %s\r\nServer: %s\r\n",codigo,ALLOWS,date,server_signature);
     }
-    else if(flagOptions == 2){
-        sprintf(cabecera,"HTTP/1.1  %s\r\nDate: %s\r\nServer: %s\r\n",codigo,date,server_signature);
-    }
-
     else{
         sprintf(cabecera,"HTTP/1.1  %s\r\nDate: %s\r\nServer: %s\r\n",codigo,date,server_signature);
     }
@@ -301,6 +297,12 @@ void post(int socketfd, Request *r, char* server_root, char * server_signature){
     FILE *file;
     
 
+    if (!r|| !(r->path)){
+        mandar_respuesta(socketfd,"400 Bad Request",NULL,server_signature,0);
+        return;
+    }
+
+    //////printf("POST DETECTADO\n");
     sprintf(real_path,".%.*s",(int)r->path_len,r->path);
 
     realreal_path=strtok(real_path, "?");
