@@ -1,10 +1,7 @@
 #include "../includes/hilos.h"
-static volatile int got_signal=0;
-
 
 void sig_thread_handler(int sig){
-    got_signal=1;
-    
+    pthread_exit(NULL);
 
 }
 
@@ -33,49 +30,25 @@ void * thread_main(void *arg){
     sigaction(SIGPIPE, &act, NULL);
     
     
-    while (got_signal==0){
+    while (1){
         
 
         pthread_mutex_lock(&mlock);
-        if(got_signal==1){//En caso de recibir SIGUSR2 debe de salir
-        
-            pthread_mutex_unlock(&mlock);
-
-            return NULL;
-            pthread_exit(NULL);
-        }
-        //Un hilo acepta una conexión
-
-        
 
         connfd = accept_connection(listenfd);
-        
-
-        if(got_signal==1){//En caso de recibir SIGUSR2 debe de salir
-                 
-            pthread_mutex_unlock(&mlock);
-            if(connfd)close(connfd);
-            return NULL;
-            pthread_exit(NULL);
-
-        }
+        *(h->socketid) = connfd;
         
         pthread_mutex_unlock(&mlock);//Levanta el semáforo para que pase otro hilo
 
         
-
         procesar_conexion(connfd,h->server_root,h->server_signature);//Procesa la petición que ha recibido
 
         close(connfd);//Cierra el socket particular que había abierto para esa conexión
+        *(h->socketid) = connfd;
 
     }
     //En caso de que le llegue la señal SIGUSR2 en un momento diferente al down del
     //mutex o el accept también debe de salir correctamente
-    if(got_signal==1){
-        if(connfd)close(connfd);
-        return NULL;
-        pthread_exit(NULL);
-    }
 
 }
 

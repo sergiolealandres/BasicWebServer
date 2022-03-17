@@ -1,13 +1,14 @@
 
 #include "../includes/procesar.h"
 
+/*Función para crear una peticion*/
 Request* request_create(){
 
     Request* request=(Request*)malloc(sizeof(Request));
 
     return request;
 }
-
+/*Función para liberar una peticion*/
 void request_free(Request *request){
     
     if(request){
@@ -15,6 +16,7 @@ void request_free(Request *request){
     }
 }
 
+/*Función para hacer una copia de una petición*/
 Request* request_copy(Request *r){
     int i;
     Request *cpy = request_create();
@@ -38,6 +40,7 @@ Request* request_copy(Request *r){
     return cpy;
 }
 
+/*Función obtener el content type*/
 int tipo_fichero(char* path,char *tipo){
     char final[6];
     size_t len;
@@ -74,6 +77,8 @@ int tipo_fichero(char* path,char *tipo){
     return 0;
 }
 
+
+/*Función general para procesar una petición*/
 int procesar_conexion(int socketfd,char *server_root, char * server_signature){
 
     Request *request;
@@ -83,6 +88,8 @@ int procesar_conexion(int socketfd,char *server_root, char * server_signature){
     
     request->buflen=0;
 
+    //Parseamos la petición, obteniendo los valores que nos interesan y guardándolos en la
+    //estructura request
     parse=parsear_peticion(socketfd, &request);
 
     if(parse==-1)return -1;
@@ -93,13 +100,17 @@ int procesar_conexion(int socketfd,char *server_root, char * server_signature){
         return 0;
     }
 
-    if (strncmp(request->method, "GET", request->method_len) == 0)get(socketfd, request,server_root,server_signature);
+    if (strncmp(request->method, "GET", request->method_len) == 0)
+    get(socketfd, request,server_root,server_signature);//PROCESAMOS UN GET
 
-    else if(strncmp(request->method, "POST", request->method_len) == 0)post(socketfd, request,server_root,server_signature);
+    else if(strncmp(request->method, "POST", request->method_len) == 0)
+    post(socketfd, request,server_root,server_signature);//PROCESAMOS UN POST
 
-    else if(strncmp(request->method, "OPTIONS", request->method_len) == 0)options(socketfd, request,server_signature);
+    else if(strncmp(request->method, "OPTIONS", request->method_len) == 0)
+    options(socketfd, request,server_signature);//PROCESAMOS UN OPTIONS
 
-    else if(strncmp(request->method, "HEAD", request->method_len) == 0)head(socketfd, request,server_root,server_signature);
+    else if(strncmp(request->method, "HEAD", request->method_len) == 0)
+    head(socketfd, request,server_root,server_signature);//PROCESAMOS UN HEAD
 
     else mandar_respuesta(socketfd,"501 Not Implemented",NULL,server_signature,0);
 
@@ -110,7 +121,7 @@ int procesar_conexion(int socketfd,char *server_root, char * server_signature){
 
 void options(int socketfd, Request *request, char *server_signature){
 
-    mandar_respuesta(socketfd,"200 OK",NULL,server_signature,1);
+    mandar_respuesta(socketfd,"200 OK",NULL,server_signature,1);//MANDA LA CABECERA ÚNICAMENTE
 
 }
 
@@ -121,18 +132,22 @@ void head(int socketfd, Request *r, char *server_root, char *server_signature){
 
 
     if (!r|| !(r->path)){
+<<<<<<< HEAD
         mandar_respuesta(socketfd,"400 Bad Request",NULL,server_signature,-1);
+=======
+        mandar_respuesta(socketfd,"400 Bad Request",NULL,server_signature,0);//En caso de que no haya path o un error
+>>>>>>> 9d539271cb1532134f48bf2f3f4297ced79489bb
         return;
     }
 
     
     if(r->path_len==1){
-        sprintf(real_path,"%s/index.html",server_root);
+        sprintf(real_path,"%s/index.html",server_root);//Caso base (cargar el index.html)
     }
 
     else{
 
-        sprintf(real_path,"%s%.*s",server_root,(int)r->path_len,r->path);
+        sprintf(real_path,"%s%.*s",server_root,(int)r->path_len,r->path);//construimos el path real
     }
 
     if(!(f=fopen(real_path,"r"))){
@@ -141,7 +156,7 @@ void head(int socketfd, Request *r, char *server_root, char *server_signature){
     }
 
     fclose(f);
-    mandar_respuesta(socketfd,"200 OK",real_path,server_signature,2);
+    mandar_respuesta(socketfd,"200 OK",real_path,server_signature,2);//mandamos la respuesta indicando que se trata de un head
 
     return;
 
@@ -218,8 +233,7 @@ void mandar_respuesta(int socketfd,char *codigo,char *path,char *server_signatur
         while(acc_sent<file_length){
 
             aux =sendfile(socketfd,f,NULL,file_length);
-            if(errno==EINTR)return;
-
+        
             acc_sent += aux;  
         }
 
@@ -234,7 +248,7 @@ void get(int socketfd, Request *r,char * server_root,char * server_signature){
     FILE *f;
     char real_path[MAX_PATH], aux[MAX_PATH], *type_data=NULL;
     char *aux1, *aux2, comando[MAX_HEADER];
-    int i;
+    
 
 
     if (!r|| !(r->path)){
@@ -297,8 +311,8 @@ void post(int socketfd, Request *r, char* server_root, char * server_signature){
     char* type_data=NULL, aux[MAX_PATH]="\0", real_path[MAX_PATH];
     char *realreal_path, comando[MAX_ANSWER], buffer[SMALL_SIZE]="\0";
     char *aux1=NULL, realbuff[MAX_PATH]="\0";
-    int i, flag=0, size_recurso=-1;
-    FILE *file;
+    int flag=0,i, size_recurso=-1;
+    
     
 
     if (!r|| !(r->path)){
@@ -306,7 +320,7 @@ void post(int socketfd, Request *r, char* server_root, char * server_signature){
         return;
     }
 
-    //////printf("POST DETECTADO\n");
+    
     sprintf(real_path,".%.*s",(int)r->path_len,r->path);
 
     realreal_path=strtok(real_path, "?");
@@ -356,6 +370,9 @@ void post(int socketfd, Request *r, char* server_root, char * server_signature){
         executeAndPrintOnScreen(socketfd, comando,server_signature);
         return;
     }
+    else{
+        mandar_respuesta(socketfd,"501 Not Implemented",NULL,server_signature,0);
+    }
 }
 
 int executeAndPrintOnScreen(int socketfd, char*comando, char* server_signature){
@@ -364,13 +381,14 @@ int executeAndPrintOnScreen(int socketfd, char*comando, char* server_signature){
     char buffer2[MAX_PATH]="\0", line[MAX_PATH];
     time_t now;
     struct tm tm;
-    int acc = 0,aux;
+    int acc = 0;
     char date[SMALL_SIZE];
+    char *aux;
 
     file=popen(comando, "r");
     if(!file)return -1;
     
-    while (aux = fgets(line, 1000, file) != NULL)
+    while ((aux = fgets(line, ONE_KB, file)) != NULL)
     {
         strcat(buffer2, line);
     }

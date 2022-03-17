@@ -22,6 +22,7 @@ typedef struct{
     int i;
     char *server_root;
     char *server_signature;
+    int * socketid;
 }HiloArg;
 
 typedef struct {

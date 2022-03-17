@@ -4,7 +4,7 @@
 
 #include <confuse.h>
 
-#define MAX_HILOS 10
+#define MAX_HILOS 1
 
 
 pthread_mutex_t mlock = PTHREAD_MUTEX_INITIALIZER;
@@ -82,33 +82,35 @@ int main(int argc, char **argv){
     printf("server signature: %s\n",server_signature);
 
     cfg_free(cfg);
-
+    
     //Establecemos manejadores para las señales SIGINT y SIGPIPE
     sigemptyset(&(act.sa_mask));
     act.sa_flags=0;
     act.sa_handler=sig_int;
-
+     
     sigaction(SIGINT, &act, NULL);
 
     act.sa_handler=sig_pipe;
 
     sigaction(SIGPIPE, &act, NULL);
 
-    // do_daemon(); //Demonizamos el servidor
-
+    //do_daemon(); //Demonizamos el servidor
+    
     listenfd=initiate_server(listen_port,clients);//Lanzamos el servidor, obteniendo el socket
-
+    
     nthreads = MAX_HILOS;//Fijamos el número de hilos que utilizaremos
-
+    
     //Inicializamos las estructuras de los hilos
     tptr = calloc(nthreads, sizeof(Thread));
-
+    
     
     for (i = 0; i < nthreads; i++){
         h[i] = (HiloArg *)malloc(sizeof(HiloArg));
         h[i]->i = i;
         h[i]->server_root = (char*)malloc(MAX_SIZE);
         h[i]->server_signature = (char*)malloc(MAX_SIZE);
+        h[i]->socketid=(int*)malloc(sizeof(int));
+        *(h[i]->socketid)=-1;
         strncpy(h[i]->server_root,server_root,strlen(server_root)+1);
         strncpy(h[i]->server_signature,server_signature,strlen(server_signature)+1);
 
@@ -131,13 +133,16 @@ int main(int argc, char **argv){
        
         pthread_join(tptr[i].thread_tid, NULL);//Hacemos join de los hilos
         
+        if(*(h[i]->socketid)!=-1)close(*(h[i]->socketid));
+        
     }
     
 
     for (i = 0; i < nthreads; i++){//Liberamos las estructuras de los hilos
          
         free(h[i]->server_root);
-        free(h[i]->server_signature); 
+        free(h[i]->server_signature);
+        free(h[i]->socketid); 
         free(h[i]);
     } 
 
