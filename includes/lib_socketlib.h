@@ -19,12 +19,23 @@
 #include <unistd.h>
 #include <errno.h>
 
-#define NFC_SERVER_PORT 3000
-#define MAX_CONNECTIONS 10
-
+/**
+ * @brief Inicializa el servidor. Llama a las funciones socket(),bind() y listen()
+ *  
+ * @param port puerto en el que el servidor escucha peticiones
+ * @param max_connections maximas conexiones soportadas por el servidor
+ * @return socket del servidor
+ */
 int initiate_server(long port, long max_connections);
+
+/**
+ * @brief Se bloquea hasta que se reciba un connect(). 
+ * Acepta la conexión y devuelve el socket correspondiente
+ * 
+ * @param sockval socket del servidor
+ * @return socket de la conexión
+ */
 int accept_connection(int sockval);
-void launch_service(int connval);
 
 
 #endif

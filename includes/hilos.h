@@ -26,6 +26,15 @@
 
 #define MAX_SIZE 2048
 
+/**
+ * @brief Estructura usada para pasar como parámetro 
+ * de la función threas_main y thread_make
+ * @param i número de hilo
+ * @param server_root path con el root del servidor
+ * @param server_signature nombre y versión del servidor
+ * @param socketid puntero al socket de la conexión gestionada por el hilo
+ * 
+ */
 typedef struct{
     int i;
     char *server_root;
@@ -33,6 +42,11 @@ typedef struct{
     int * socketid;
 }HiloArg;
 
+/**
+ * @brief Estructura de hilo para ejecutar
+ * @param thread_id id del hilo
+ * @param thread_count número de hilos
+ */
 typedef struct {
 
 pthread_t thread_tid;
@@ -40,15 +54,31 @@ pthread_t thread_tid;
 long thread_count;
 } Thread;
 
+/**
+ * @brief Variables globales compartidas utilizadas por los hilos
+ * 
+ */
 Thread *tptr;
-
 int listenfd, nthreads;
 pthread_mutex_t mlock;
 
-
+/**
+ * @brief Función que contiene la funcionalidad del hilo.
+ * Inicializa los manejadores de señales del hilo, acepta conexiones 
+ * al servidor usando un mutex para que no haya dos accept concurrentes
+ * y procesa las peticiones que le llegan
+ * 
+ * @param h HiloArg con los argumentos del hilo
+ */
 void thread_make(HiloArg *h);
 
-
+/**
+ * @brief función que se llama para lanzar los hilos
+ * Llama a thread_make que incluye toda la funcionalidad de los hilos
+ * 
+ * @param arg 
+ * @return void* 
+ */
 void * thread_main(void *arg);
 
 
