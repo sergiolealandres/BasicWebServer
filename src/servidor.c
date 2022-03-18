@@ -12,7 +12,7 @@
 
 #include <confuse.h>
 
-#define MAX_HILOS 1
+#define MAX_HILOS 10
 
 
 pthread_mutex_t mlock = PTHREAD_MUTEX_INITIALIZER;
@@ -108,17 +108,15 @@ int main(int argc, char **argv){
     
     nthreads = MAX_HILOS;//Fijamos el número de hilos que utilizaremos
     
-    //Inicializamos las estructuras de los hilos
-    tptr = calloc(nthreads, sizeof(Thread));
-    
     
     for (i = 0; i < nthreads; i++){
         h[i] = (HiloArg *)malloc(sizeof(HiloArg));
         h[i]->i = i;
         h[i]->server_root = (char*)malloc(MAX_SIZE);
         h[i]->server_signature = (char*)malloc(MAX_SIZE);
-        h[i]->socketid=(int*)malloc(sizeof(int));
-        *(h[i]->socketid)=-1;
+        h[i]->socketid=-1;
+        
+        
         strncpy(h[i]->server_root,server_root,strlen(server_root)+1);
         strncpy(h[i]->server_signature,server_signature,strlen(server_signature)+1);
 
@@ -131,7 +129,7 @@ int main(int argc, char **argv){
 
     for (i = 0; i < nthreads; i++){
         
-        pthread_kill(tptr[i].thread_tid, SIGUSR2);
+        pthread_kill(h[i]->thread_tid, SIGUSR2);
         //Enviamos SIGUSR2 a todos los hilos para que terminen correctamente
         
     }
@@ -139,9 +137,11 @@ int main(int argc, char **argv){
 
     for (i = 0; i < nthreads; i++){
        
-        pthread_join(tptr[i].thread_tid, NULL);//Hacemos join de los hilos
+        pthread_join(h[i]->thread_tid, NULL);//Hacemos join de los hilos
         
-        if(*(h[i]->socketid)!=-1)close(*(h[i]->socketid));
+        //En caso de que se haya interrumpido a los hilos en un mal comento, no habiéndo
+        //cerrado el socket, lo cierra el padre.
+        if((h[i]->socketid!=-1))close((h[i]->socketid));
         
     }
     
@@ -150,12 +150,11 @@ int main(int argc, char **argv){
          
         free(h[i]->server_root);
         free(h[i]->server_signature);
-        free(h[i]->socketid); 
+        
         free(h[i]);
     } 
 
     close(listenfd);//Cerramos el socket
-    free(tptr);//Liberamos la estructura de hilos
 
     return 0;
     

@@ -33,32 +33,25 @@
  * @param server_root path con el root del servidor
  * @param server_signature nombre y versión del servidor
  * @param socketid puntero al socket de la conexión gestionada por el hilo
+ * @param thread_id id del hilo
+ * @param thread_count número de hilos
  * 
  */
 typedef struct{
     int i;
     char *server_root;
     char *server_signature;
-    int * socketid;
+    int socketid;
+    pthread_t thread_tid;
+    long thread_count;
+    
 }HiloArg;
 
-/**
- * @brief Estructura de hilo para ejecutar
- * @param thread_id id del hilo
- * @param thread_count número de hilos
- */
-typedef struct {
-
-pthread_t thread_tid;
-
-long thread_count;
-} Thread;
 
 /**
  * @brief Variables globales compartidas utilizadas por los hilos
  * 
  */
-Thread *tptr;
 int listenfd, nthreads;
 pthread_mutex_t mlock;
 

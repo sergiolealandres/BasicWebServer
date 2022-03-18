@@ -67,28 +67,6 @@ typedef struct {
 } Request;
 
 /**
- * @brief Crea una copia de una petición. Reserva memoria.
- * 
- * @param r Petición a copiar
- * @return Request* copia de la petición
- */
-Request* request_copy(Request *r);
-
-/**
- * @brief Reserva memoria para una estructura request
- * 
- * @return Request* Nueva request
- */
-Request* request_create();
-
-/**
- * @brief Libera los recursos reservados por una request
- * 
- * @param request 
- */
-void request_free(Request *request);
-
-/**
  * @brief Parsea una petición. Para ello llama a read() hasta que llega una petición,
  * y mediante picohttpparser se obtienen los distintos campos de la petición que se 
  * guardan en una Request.
@@ -97,7 +75,7 @@ void request_free(Request *request);
  * @param request doble puntero a la petición parseada
  * @return int 
  */
-int parsear_peticion(int socketfd, Request **request);
+int parsear_peticion(int socketfd, Request *request);
 
 /**
  * @brief Procesa una petición. Para ello llama parsear_peticion y en función de
@@ -152,7 +130,7 @@ void mandar_respuesta(int socketfd,char *codigo,char *path,char *server_signatur
  * @param server_root root del servidor
  * @param server_signature nombre y versión del servidor
  */
-void get(int socketfd, Request *r,char *server_root,char *server_signature);
+void get(int socketfd, Request r,char *server_root,char *server_signature);
 
 /**
  * @brief Función que implementa la funcionalidad POST
@@ -162,7 +140,7 @@ void get(int socketfd, Request *r,char *server_root,char *server_signature);
  * @param server_root root del servidor
  * @param server_signature nombre y versión del servidor
  */
-void post(int socketfd, Request *r,char *server_root,char *server_signature);
+void post(int socketfd, Request r,char *server_root,char *server_signature);
 
 /**
  * @brief Función que implementa la funcionalidad OPTIONS
@@ -171,7 +149,7 @@ void post(int socketfd, Request *r,char *server_root,char *server_signature);
  * @param r Petición de OPTIONS
  * @param server_signature nombre y versión del servidor
  */
-void options(int socketfd, Request *request, char *server_signature);
+void options(int socketfd, Request request, char *server_signature);
 
 /**
  * @brief Función que implementa la funcionalidad HEAD
@@ -180,7 +158,7 @@ void options(int socketfd, Request *request, char *server_signature);
  * @param r Petición del HEAD
  * @param server_signature nombre y versión del servidor
  */
-void head(int socketfd, Request *r, char *server_root, char *server_signature);
+void head(int socketfd, Request r, char *server_root, char *server_signature);
 
 /**
  * @brief Función que convierte un comando por URL a un comando ejecutable
@@ -197,6 +175,6 @@ void clean_path_get(char **dirtypath, char*cleanpath);
  * @param position Posición en la que se encuentra Content Length
  * @return int 
  */
-int searchForContentLenght(Request *r, int *position);
+int searchForContentLength(Request r, int *position);
 
 #endif
