@@ -325,7 +325,7 @@ void post(int socketfd, Request r, char* server_root, char * server_signature){
     }
 
     
-    sprintf(real_path,".%.*s",(int)r.path_len,r.path);
+    sprintf(real_path,"%s%.*s",server_root,(int)r.path_len,r.path);
 
     path_for_command=strtok(real_path, "?");
 
