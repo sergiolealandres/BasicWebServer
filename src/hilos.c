@@ -36,7 +36,7 @@ void * thread_main(void *arg){
     while (1){
         
 
-        pthread_mutex_lock(&mlock);
+        pthread_mutex_lock(&mlock);//El resto de hilos esperan en el semáforo
 
         h->socketid = accept_connection(listenfd);//accept
         

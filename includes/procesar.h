@@ -161,14 +161,6 @@ void options(int socketfd, Request request, char *server_signature);
 void head(int socketfd, Request r, char *server_root, char *server_signature);
 
 /**
- * @brief Función que convierte un comando por URL a un comando ejecutable
- * 
- * @param dirtypath 
- * @param cleanpath
- */
-void clean_path_get(char **dirtypath, char*cleanpath);
-
-/**
  * @brief Busca el campo Content Length de una petición
  * 
  * @param r petición

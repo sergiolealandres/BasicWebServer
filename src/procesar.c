@@ -39,6 +39,8 @@ int tipo_fichero(char* path,char *tipo){
     else if (!strcmp(final,".doc")) sprintf(tipo,"application/msword");
     else if (!strcmp(final,".docx")) sprintf(tipo,"application/msword");
     else if (!strcmp(final,".pdf")) sprintf(tipo,"application/pdf");
+    else if (!strcmp(final,".py")) sprintf(tipo,"application/x-python-code");
+    else if (!strcmp(final,".php")) sprintf(tipo,"application/x-php");
     else return -1;
     return 0;
 }
@@ -59,11 +61,17 @@ int procesar_conexion(int socketfd,char *server_root, char * server_signature){
     parse=parsear_peticion(socketfd, &request);
 
 
+    if(parse==-2){
+        mandar_respuesta(socketfd,"400 Bad Request",NULL,server_signature,-1);
+    
+        return -1;
+    }
+
     if(parse==-1)return -1;
 
 
     if(request.minor_version != 1){
-        mandar_respuesta(socketfd,"505 HTTP Version Not Supported",NULL,server_signature,0);
+        mandar_respuesta(socketfd,"505 HTTP Version Not Supported",NULL,server_signature,-1);
         
         return 0;
     }
@@ -81,7 +89,7 @@ int procesar_conexion(int socketfd,char *server_root, char * server_signature){
     head(socketfd, request,server_root,server_signature);//PROCESAMOS UN HEAD
 
     //En caso de no tratarse de ninguna de las anteriores peticiones, se manda not implemented
-    else mandar_respuesta(socketfd,"501 Not Implemented",NULL,server_signature,0);
+    else mandar_respuesta(socketfd,"501 Not Implemented",NULL,server_signature,-1);
     
     return 0;
 }
@@ -243,14 +251,35 @@ void get(int socketfd, Request r,char * server_root,char * server_signature){
         type_data = strtok(aux_path, ".");
         type_data = strtok(NULL, "?");
 
+        if(type_data==NULL){
+        mandar_respuesta(socketfd,"404 Not Found",NULL,server_signature,-1);
+        return;
+        }
+
         //En caso de que se trate de un script
         if(strncmp(type_data, "py", strlen(real_path))==0   || strncmp(type_data, "php", strlen(real_path))==0){
 
             dirtyPath=strtok(real_path, ".");
+            
             cleanPath=strtok(NULL, ".");
             
+            
             //Quitamos todos los '+' y construimos el path 'limpio'
-            clean_path_get(&cleanPath, dirtyPath);
+            char *aux3, realbuff[100000]="\0";
+
+            strtok(cleanPath, "?");
+            aux3=strtok(NULL, "?");
+
+            //Limpiamos el path de '+' y construimos uno nuevo
+            dirtyPath=strtok(aux3, "+");
+            while((dirtyPath)!=NULL){            
+
+                strcat(realbuff, dirtyPath);
+                strcat(realbuff, " ");
+                dirtyPath=strtok(NULL, "+");        
+            } 
+            strtok(realbuff, "=");
+            dirtyPath=strtok(NULL, "=");
 
             
             if(strncmp(type_data, "py", strlen(real_path))==0)
@@ -262,6 +291,7 @@ void get(int socketfd, Request r,char * server_root,char * server_signature){
                 sprintf(comando, "php %s.php %s ", real_path, dirtyPath);
 
             //Ejecutamos el comando e imprimimos la salida por pantalla
+            
             executeAndPrintOnScreen(socketfd, comando,server_signature);
 
             return;
@@ -279,7 +309,6 @@ void get(int socketfd, Request r,char * server_root,char * server_signature){
 
     return;
 }
-
 
 void post(int socketfd, Request r, char* server_root, char * server_signature){
 
@@ -306,11 +335,16 @@ void post(int socketfd, Request r, char* server_root, char * server_signature){
 
     type_data = strtok(NULL, "?");
 
+    if(type_data==NULL){
+        mandar_respuesta(socketfd,"404 Not Found",NULL,server_signature,-1);
+        return;
+    }
+
     //En caso de tratarse de un script
     if(strncmp(type_data, "py", strlen(real_path))==0   || strncmp(type_data, "php", strlen(real_path))==0){
         
-
-        if(searchForContentLength(r, &i)==1){//Buscamos si hay cuerpo buscando la cabecera Content-Length
+        flag=searchForContentLength(r, &i);
+        if(flag==1){//Buscamos si hay cuerpo buscando la cabecera Content-Length
            
             size_recurso=atoi(r.headers[i].value);//Obtenemos la longitud del contenido
             
@@ -318,7 +352,7 @@ void post(int socketfd, Request r, char* server_root, char * server_signature){
            
             aux_string=strtok(buffer, "+");
             
-
+            
             //"Limpiamos" el cuerpo eliminando los '+' y construyéndolo de nuevo
             while(aux_string!=NULL){            
 
@@ -349,8 +383,9 @@ void post(int socketfd, Request r, char* server_root, char * server_signature){
         return;
     }
     else{
+
         //En caso de no ser un script se devuelve not implemented 
-        mandar_respuesta(socketfd,"501 Not Implemented",NULL,server_signature,0);
+        mandar_respuesta(socketfd,"404 Not Found",NULL,server_signature,-1);
     }
 }
 
@@ -427,18 +462,18 @@ int parsear_peticion(int socketfd, Request *request){
         
         //Utilizamos la función read() para leer del socket, la petición puede ser de tamaño muy largo por lo que utilizamos un while
         while ((rret = read(socketfd, (request)->buf + (request)->buflen, sizeof((request)->buf) - (request)->buflen)) == -1){
-
+            
             if(errno == EWOULDBLOCK || errno==EINTR){
-               
+                
                 return -1;
             }
             
         }
         
+        
 
         if (rret <= 0){
-            
-            
+           
             return -1;
         }
             
@@ -453,11 +488,12 @@ int parsear_peticion(int socketfd, Request *request){
                                 &((request)->method_len),(const char**) &((request)->path), &((request)->path_len),
                                 &((request)->minor_version), (request)->headers, &((request)->num_headers), prevbuflen);
 
+       
         if (pret > 0)
             break; 
         else if (pret == -1){
-
-            return -1;
+            
+            return -2;
         }
         if ((request)->buflen == sizeof((request)->buf)){
             
@@ -466,26 +502,6 @@ int parsear_peticion(int socketfd, Request *request){
         
     }
     return 0;
-
-}
-
-void clean_path_get(char **dirtypath, char *cleanpath){
-
-    char *aux3, realbuff[100000]="\0";
-
-    strtok(*dirtypath, "?");
-    aux3=strtok(NULL, "?");
-
-    //Limpiamos el path de '+' y construimos uno nuevo
-    cleanpath=strtok(aux3, "+");
-    while((cleanpath)!=NULL){            
-
-        strcat(realbuff, cleanpath);
-        strcat(realbuff, " ");
-        cleanpath=strtok(NULL, "+");        
-    } 
-    strtok(realbuff, "=");
-    cleanpath=strtok(NULL, "=");  
 
 }
 
