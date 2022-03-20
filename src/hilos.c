@@ -32,7 +32,7 @@ void * thread_main(void *arg){
     //Añadimos un manejador para asegurarnos del cierre y salida correcta de los hilos
     sigaction(SIGUSR2, &act, NULL);
     
-    
+
     
     while (1){
         
@@ -45,8 +45,9 @@ void * thread_main(void *arg){
         pthread_mutex_unlock(&mlock);//Levanta el semáforo para que pase otro hilo
 
         
-        procesar_conexion(h->socketid,h->server_root,h->server_signature);//Procesa la petición que ha recibido
-        
+        if(procesar_conexion(h->socketid,h->server_root,h->server_signature)==-1)//Procesa la petición que ha recibido
+            syslog(LOG_ERR, "No se ha podido procesar la respuesta");
+
 
         close(h->socketid);//Cierra el socket particular que había abierto para esa conexión
         h->socketid=-1;

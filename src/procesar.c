@@ -66,7 +66,7 @@ int procesar_conexion(int socketfd,char *server_root, char * server_signature){
     if(parse==-2){
         mandar_respuesta(socketfd,"400 Bad Request",NULL,server_signature,-1);
     
-        return -1;
+        return 0;
     }
 
     if(parse==-1)return -1;
@@ -172,7 +172,12 @@ char * construir_cabecera(char *codigo,char *path_recurso,char *server_signature
         size_recurso = ftell(f);
         fclose(f);
 
-        if(tipo_fichero(path_recurso,tipo_fic)) return NULL;
+        if(tipo_fichero(path_recurso,tipo_fic)) {
+
+            syslog(LOG_ERR, "Error en el ctipo de fichero");
+            return NULL;
+
+        }
 
 
         //Terminamos de constuirm la cabecera
@@ -192,10 +197,17 @@ void mandar_respuesta(int socketfd,char *codigo,char *path,char *server_signatur
     long acc_sent = 0;
     ssize_t already_sended_size;
 
-    if(!codigo) return;
+    if(!codigo) {
+
+        syslog(LOG_ERR, "Error en el código de respuesta");
+        return;
+    }
     
     //Llamamos a la función de constuir cabecera
-    if(!(cabecera=construir_cabecera(codigo,path,server_signature, flagOption)))return;
+    if(!(cabecera=construir_cabecera(codigo,path,server_signature, flagOption))){
+        syslog(LOG_ERR, "Error en la construcción de la cabecera");
+        return;
+    }
 
     //Mandamos al servidor la cabecera por el socket
 
@@ -207,7 +219,12 @@ void mandar_respuesta(int socketfd,char *codigo,char *path,char *server_signatur
         send(socketfd,codigoError,strlen(codigoError),0);
     }
     else if(path && flagOption!=2){
-        if(!(f=open(path,O_RDONLY))) return;
+        if(!(f=open(path,O_RDONLY))) {
+
+            syslog(LOG_ERR, "Error abriendo el fichero para mandar respuesta");
+            return;
+
+        }
         file_length = lseek(f, 0L, SEEK_END);//Nos situamos al final del fichero
         lseek(f,0,0);
 
@@ -410,7 +427,10 @@ int executeAndPrintOnScreen(int socketfd, char*comando, char* server_signature){
     char *auxiliar_string;
 
     file=popen(comando, "r");//Ejecutamos el comando obteniendo la salida sobre un fichero
-    if(!file)return -1;
+    if(!file){
+        syslog(LOG_ERR, "Error popen en la ejecución del comando");
+        return -1;
+    }
     
     //Construimos, sobre un buffer, una cadena linea a linea con la salida que teníamos en el file
     while ((auxiliar_string = fgets(line, ONE_KB, file)) != NULL)
@@ -475,6 +495,7 @@ int parsear_peticion(int socketfd, Request *request){
             
             if(errno == EWOULDBLOCK || errno==EINTR){
                 
+                syslog(LOG_ERR, "Error in read");
                 return -1;
             }
             
@@ -484,6 +505,7 @@ int parsear_peticion(int socketfd, Request *request){
 
         if (rret <= 0){
            
+            syslog(LOG_ERR, "Error in read");
             return -1;
         }
             
@@ -506,6 +528,8 @@ int parsear_peticion(int socketfd, Request *request){
             return -2;
         }
         if ((request)->buflen == sizeof((request)->buf)){
+
+            syslog(LOG_ERR, "Error in phr_parse_request()");
             
             return -1;
         }

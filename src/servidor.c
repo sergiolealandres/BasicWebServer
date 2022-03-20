@@ -74,8 +74,11 @@ int main(int argc, char **argv){
 
     cfg = cfg_init(opts, 0);
 
-    if(cfg_parse(cfg, "server.conf") == CFG_PARSE_ERROR)
+    if(cfg_parse(cfg, "server.conf") == CFG_PARSE_ERROR){
+        syslog(LOG_ERR, "Error al parsear del fichero de configuración");
         return 1;
+    }
+        
 
     //Obtenemos toda la información necesaria acerca de la configuración del servidor
     strncpy(server_root, cfg_getstr(cfg,"server_root"),MAX_SIZE);
@@ -109,7 +112,7 @@ int main(int argc, char **argv){
     nthreads = MAX_HILOS;//Fijamos el número de hilos que utilizaremos
     
     
-    
+
     for (i = 0; i < nthreads; i++){
         h[i] = (HiloArg *)malloc(sizeof(HiloArg));
         h[i]->i = i;

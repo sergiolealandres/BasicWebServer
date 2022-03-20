@@ -46,8 +46,6 @@ int initiate_server(long port,long max_connections){
 
     }
 
-
-
 int accept_connection(int sockval){
     
     int desc;
@@ -63,7 +61,11 @@ int accept_connection(int sockval){
             fcntl(sockval, F_SETFL, ((const int)(fcntl(sockval, F_GETFL, 0))) ^O_NONBLOCK);
         }
         
-        else if(errno ==EINTR)return 0;
+        else if(errno ==EINTR){
+            syslog(LOG_ERR, "Error accept");
+            return 0;
+
+        }
 
     }
 
