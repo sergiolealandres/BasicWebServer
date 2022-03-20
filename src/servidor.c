@@ -102,7 +102,7 @@ int main(int argc, char **argv){
 
     sigaction(SIGPIPE, &act, NULL);
 
-    //do_daemon(); //Demonizamos el servidor
+    do_daemon(); //Demonizamos el servidor
     
     listenfd=initiate_server(listen_port,clients);//Lanzamos el servidor, obteniendo el socket
     
