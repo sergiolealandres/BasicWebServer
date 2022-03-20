@@ -10,7 +10,7 @@ try:
 except:
     ignorar = True
 
-print("Bienvenido", end="")
+print("Bienvenido ", end="")
 for arg in sys.argv:
 	if arg!=sys.argv[0]:
 		print(arg, end=" ")

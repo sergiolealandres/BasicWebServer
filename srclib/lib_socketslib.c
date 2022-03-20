@@ -55,12 +55,15 @@ int accept_connection(int sockval){
 
     len = sizeof(Conexion);
     
-    if ((desc = accept(sockval, &Conexion, &len))<0){
+    while ((desc = accept(sockval, &Conexion, &len))<0){
         
-        if(errno==EINTR )return 0;
+        if(errno==EAGAIN || errno==EWOULDBLOCK ){
+            
+            fcntl(sockval, F_SETFL, ((const int)(fcntl(sockval, F_GETFL, 0))) ^O_NONBLOCK);
+        }
         
-        syslog(LOG_ERR, "Error accepting connection");
-        exit(EXIT_FAILURE);
+        else if(errno ==EINTR)return 0;
+
     }
 
     return desc;

@@ -230,7 +230,7 @@ void mandar_respuesta(int socketfd,char *codigo,char *path,char *server_signatur
 void get(int socketfd, Request r,char * server_root,char * server_signature){
     FILE *f;
     char real_path[MAX_PATH], aux_path[MAX_PATH], *type_data=NULL;
-    char *dirtyPath, *cleanPath, comando[MAX_HEADER];
+    char *cleanPath, comando[MAX_HEADER];
     char *aux3, pathofvariables[ONE_KB] = "\0";
 
     //En caso de tratarse de un path vacío o una petición inexistente se devuelve bad request
@@ -262,7 +262,7 @@ void get(int socketfd, Request r,char * server_root,char * server_signature){
         //En caso de que se trate de un script
         if(strncmp(type_data, "py", strlen(real_path))==0   || strncmp(type_data, "php", strlen(real_path))==0){
 
-            dirtyPath=strtok(real_path, ".");
+            strtok(real_path, ".");
             
             cleanPath=strtok(NULL, ".");
             
@@ -337,7 +337,6 @@ void post(int socketfd, Request r, char* server_root, char * server_signature){
 
     char* type_data=NULL, aux_path[MAX_PATH]="\0", real_path[MAX_PATH];
     char *path_for_command, comando[MAX_ANSWER], buffer[SMALL_SIZE]="\0";
-    char *aux_string=NULL, aux_buffer[MAX_PATH]="\0";
     int flag=0,i, size_recurso=-1;
     char stringofvariables[ONE_KB] = "\0";
     

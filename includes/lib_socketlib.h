@@ -18,6 +18,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <errno.h>
+#include <fcntl.h>
 
 /**
  * @brief Inicializa el servidor. Llama a las funciones socket(),bind() y listen()
