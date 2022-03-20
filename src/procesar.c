@@ -77,16 +77,16 @@ int procesar_conexion(int socketfd,char *server_root, char * server_signature){
     }
 
     if (strncmp(request.method, "GET", request.method_len) == 0)
-    get(socketfd, request,server_root,server_signature);//PROCESAMOS UN GET
+        get(socketfd, request,server_root,server_signature);//PROCESAMOS UN GET
 
     else if(strncmp(request.method, "POST", request.method_len) == 0)
-    post(socketfd, request,server_root,server_signature);//PROCESAMOS UN POST
+        post(socketfd, request,server_root,server_signature);//PROCESAMOS UN POST
 
     else if(strncmp(request.method, "OPTIONS", request.method_len) == 0)
-    options(socketfd, request,server_signature);//PROCESAMOS UN OPTIONS
+        options(socketfd, request,server_signature);//PROCESAMOS UN OPTIONS
 
     else if(strncmp(request.method, "HEAD", request.method_len) == 0)
-    head(socketfd, request,server_root,server_signature);//PROCESAMOS UN HEAD
+        head(socketfd, request,server_root,server_signature);//PROCESAMOS UN HEAD
 
     //En caso de no tratarse de ninguna de las anteriores peticiones, se manda not implemented
     else mandar_respuesta(socketfd,"501 Not Implemented",NULL,server_signature,-1);
