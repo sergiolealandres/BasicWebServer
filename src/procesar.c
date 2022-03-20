@@ -7,6 +7,8 @@
  * ***************************************/
 #include "../includes/procesar.h"
 
+void clean_script_path(char* buffer, char *pathofvariables);
+
 int tipo_fichero(char* path,char *tipo){
     char final[6];
     size_t len;
@@ -229,7 +231,8 @@ void get(int socketfd, Request r,char * server_root,char * server_signature){
     FILE *f;
     char real_path[MAX_PATH], aux_path[MAX_PATH], *type_data=NULL;
     char *dirtyPath, *cleanPath, comando[MAX_HEADER];
-    
+    char *aux3, pathofvariables[ONE_KB] = "\0";
+
     //En caso de tratarse de un path vacío o una petición inexistente se devuelve bad request
     if (!(r.path)){
         mandar_respuesta(socketfd,"400 Bad Request",NULL,server_signature,-1);
@@ -265,30 +268,24 @@ void get(int socketfd, Request r,char * server_root,char * server_signature){
             
             
             //Quitamos todos los '+' y construimos el path 'limpio'
-            char *aux3, realbuff[100000]="\0";
+            
 
             strtok(cleanPath, "?");
             aux3=strtok(NULL, "?");
+            
 
-            //Limpiamos el path de '+' y construimos uno nuevo
-            dirtyPath=strtok(aux3, "+");
-            while((dirtyPath)!=NULL){            
+            clean_script_path(aux3,pathofvariables);
 
-                strcat(realbuff, dirtyPath);
-                strcat(realbuff, " ");
-                dirtyPath=strtok(NULL, "+");        
-            } 
-            strtok(realbuff, "=");
-            dirtyPath=strtok(NULL, "=");
-
+            
+            //printf("variables es %s\n",pathofvariables);
             
             if(strncmp(type_data, "py", strlen(real_path))==0)
                 //Si es un .py añadimos python3 al comando
-                sprintf(comando, "python3 %s.py %s ", real_path, dirtyPath);
+                sprintf(comando, "python3 %s.py %s ", real_path, pathofvariables);
 
             else
                 //Si es un .php añadimos php al comando
-                sprintf(comando, "php %s.php %s ", real_path, dirtyPath);
+                sprintf(comando, "php %s.php %s ", real_path, pathofvariables);
 
             //Ejecutamos el comando e imprimimos la salida por pantalla
             
@@ -310,13 +307,39 @@ void get(int socketfd, Request r,char * server_root,char * server_signature){
     return;
 }
 
+void clean_script_path(char* buffer, char *pathofvariables){
+    char *variable,*dirtyPath;
+    char realbuff[100000]="\0";
+
+    variable = strtok(buffer,"&");
+    while(variable != NULL){
+        buffer = strtok(NULL,"&");
+        //Limpiamos el path de '+' y construimos uno nuevo
+        dirtyPath=strtok(variable, "+");
+        while((dirtyPath)!=NULL){            
+
+            strcat(realbuff, dirtyPath);
+            strcat(realbuff, " ");
+            dirtyPath=strtok(NULL, "+");        
+        } 
+        strtok(realbuff, "=");
+        dirtyPath=strtok(NULL, "=");
+
+        strcat(pathofvariables,dirtyPath);
+        variable = strtok(buffer,"&");
+    }
+
+
+}
+
+
 void post(int socketfd, Request r, char* server_root, char * server_signature){
 
     char* type_data=NULL, aux_path[MAX_PATH]="\0", real_path[MAX_PATH];
     char *path_for_command, comando[MAX_ANSWER], buffer[SMALL_SIZE]="\0";
     char *aux_string=NULL, aux_buffer[MAX_PATH]="\0";
     int flag=0,i, size_recurso=-1;
-    
+    char stringofvariables[ONE_KB] = "\0";
     
 
     if (!(r.path)){
@@ -349,32 +372,19 @@ void post(int socketfd, Request r, char* server_root, char * server_signature){
             size_recurso=atoi(r.headers[i].value);//Obtenemos la longitud del contenido
             
             strncpy(buffer, r.buf + r.buflen - size_recurso, (size_t)size_recurso);//obtenemos el content
-           
-            aux_string=strtok(buffer, "+");
-            
-            
-            //"Limpiamos" el cuerpo eliminando los '+' y construyéndolo de nuevo
-            while(aux_string!=NULL){            
 
-                strcat(aux_buffer, aux_string);
-                strcat(aux_buffer, " ");
-                aux_string=strtok(NULL, "+");
-    
-            }
-            
-            strtok(aux_buffer, "=");
-            aux_string=strtok(NULL, "=");
+            clean_script_path(buffer,stringofvariables);
 
         }
 
         if(strncmp(type_data, "py", strlen(real_path))==0){//En caso de ser un .py
 
-            if(flag==1) sprintf(comando, "python3 %s %s ", path_for_command, aux_string);
+            if(flag==1) sprintf(comando, "python3 %s %s ", path_for_command, stringofvariables);
                 
             else sprintf(comando, "python3 %s ", path_for_command);            
         }
         else{//En caso de ser un .php
-            if(flag==1) sprintf(comando, "php %s %s ", path_for_command, aux_string);
+            if(flag==1) sprintf(comando, "php %s %s ", path_for_command, stringofvariables);
                 
             else sprintf(comando, "php %s ", path_for_command);            
         }
