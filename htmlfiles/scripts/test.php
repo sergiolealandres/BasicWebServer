@@ -6,6 +6,7 @@ echo "Inicio\n";
 echo "Script PHP\n\n";
 
 
+
 echo "Recibido por STDIN:\n";
 while( $line = fgets( $f ) ) {
   echo $line;

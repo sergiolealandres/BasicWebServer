@@ -12,6 +12,7 @@ try:
 except:
     ignorar = True
 
+
 if len(sys.argv) !=2:
     print("EL VALOR DEBE DE SER MAYOR O IGUAL QUE 0")
 else:

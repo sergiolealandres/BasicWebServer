@@ -48,6 +48,7 @@ typedef struct{
 }HiloArg;
 
 
+
 /**
  * @brief Variables globales compartidas utilizadas por los hilos
  * 

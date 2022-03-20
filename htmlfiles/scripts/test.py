@@ -8,6 +8,7 @@ print("Inicio")
 print("Script Python\n")
 
 
+
 print("Recibido por STDIN: ")
 try:
     for line in sys.stdin:

@@ -300,6 +300,7 @@ void get(int socketfd, Request r,char * server_root,char * server_signature){
         return;
     }
 
+
     fclose(f);
     //Si todo ha ido bien mandamos la respuesta con código 200 OK
     mandar_respuesta(socketfd,"200 OK",real_path,server_signature,0);

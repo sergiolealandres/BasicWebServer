@@ -109,6 +109,7 @@ int main(int argc, char **argv){
     nthreads = MAX_HILOS;//Fijamos el número de hilos que utilizaremos
     
     
+    
     for (i = 0; i < nthreads; i++){
         h[i] = (HiloArg *)malloc(sizeof(HiloArg));
         h[i]->i = i;

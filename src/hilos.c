@@ -33,6 +33,7 @@ void * thread_main(void *arg){
     sigaction(SIGUSR2, &act, NULL);
     
     
+    
     while (1){
         
 
